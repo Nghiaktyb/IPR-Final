@@ -1,0 +1,19 @@
+# MedicX Backend — Dependencies
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+sqlalchemy>=2.0.35
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.1.0
+Pillow>=10.3.0
+numpy>=1.26.0
+reportlab>=4.2.0
+pydantic[email]>=2.7.0
+pydantic-settings>=2.3.0
+python-dotenv>=1.0.0
+aiofiles>=23.2.0
+opencv-python-headless>=4.9.0
+
+# AI Engine (optional — runs in simulation mode without these)
+# torch>=2.3.0
+# torchvision>=0.18.0

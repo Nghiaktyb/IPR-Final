@@ -1,0 +1,95 @@
+.viewer { max-width: 1400px; }
+
+.viewerHeader {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 24px;
+}
+.caseInfo { color: var(--text-secondary); margin-top: 4px; font-size: 0.9rem; display: flex; align-items: center; }
+
+.viewerGrid {
+  display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; align-items: start;
+}
+
+/* Image Panel */
+.imagePanel {
+  background: var(--bg-card); border-radius: var(--radius-lg);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.imageContainer {
+  position: relative; background: #0a1628;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 450px;
+}
+.xrayImage {
+  max-width: 100%; max-height: 500px; object-fit: contain; display: block;
+}
+.heatmapLabel {
+  position: absolute; top: 12px; left: 12px;
+  padding: 4px 12px; border-radius: 6px;
+  background: rgba(0,0,0,0.7); color: white;
+  font-size: 0.8rem; font-weight: 600;
+}
+.imageControls {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 14px 16px; border-top: 1px solid var(--border);
+}
+.opacityControl {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px 14px; font-size: 0.85rem; color: var(--text-secondary);
+}
+.opacityControl input[type="range"] { flex: 1; }
+
+/* Insights Panel */
+.insightsPanel {
+  background: var(--bg-card); border-radius: var(--radius-lg);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.insightsHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18px 20px; border-bottom: 1px solid var(--border-light);
+}
+.thresholdControl {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+  font-size: 0.85rem;
+}
+.thresholdControl label { white-space: nowrap; font-weight: 600; color: var(--text-secondary); }
+.thresholdControl input[type="range"] { flex: 1; }
+
+.findingsList {
+  padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;
+}
+
+.findingCard {
+  padding: 14px 16px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-light); background: var(--bg-primary);
+  transition: all var(--transition);
+}
+.findingCard:hover { border-color: var(--border); }
+.flagged { border-color: var(--danger); border-left: 3px solid var(--danger); background: var(--danger-light); }
+
+.findingTop {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.diseaseName { font-weight: 600; font-size: 0.95rem; }
+.confValue { font-weight: 800; font-size: 1.1rem; }
+
+.validationRow {
+  display: flex; gap: 6px; margin-top: 10px; align-items: center;
+}
+
+.noteArea {
+  margin-top: 8px; font-size: 0.82rem; min-height: 50px;
+  resize: vertical; width: 100%;
+}
+
+.clinicalNotes {
+  padding: 16px 20px; border-top: 1px solid var(--border-light);
+}
+.clinicalNotes h4 { margin-bottom: 6px; }
+.clinicalNotes p { color: var(--text-secondary); font-size: 0.9rem; }
+
+@media (max-width: 900px) {
+  .viewerGrid { grid-template-columns: 1fr; }
+}

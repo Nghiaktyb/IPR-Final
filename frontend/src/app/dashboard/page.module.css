@@ -1,0 +1,18 @@
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.subtitle {
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-size: 0.95rem;
+}
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-light);
+}

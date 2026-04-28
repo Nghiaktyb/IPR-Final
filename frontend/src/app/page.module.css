@@ -1,0 +1,117 @@
+.landing { min-height: 100vh; position: relative; overflow: hidden; background: #060a14; color: white; }
+
+.bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.bgOrb1, .bgOrb2, .bgOrb3 { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.3; }
+.bgOrb1 { width: 600px; height: 600px; background: #1a73e8; top: -200px; right: -100px; animation: float 8s ease-in-out infinite; }
+.bgOrb2 { width: 400px; height: 400px; background: #6c63ff; bottom: -100px; left: -50px; animation: float 12s ease-in-out infinite reverse; }
+.bgOrb3 { width: 300px; height: 300px; background: #00bcd4; top: 40%; left: 30%; animation: float 10s ease-in-out infinite 2s; }
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+.header {
+  position: relative; z-index: 10; display: flex; align-items: center; padding: 20px 40px; gap: 12px;
+}
+.logoMark {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: linear-gradient(135deg, #1a73e8, #6c63ff);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.2rem; color: white;
+}
+.logoName { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; }
+.headerNav { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+.hero {
+  position: relative; z-index: 10;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 60px; padding: 60px 40px 40px; max-width: 1300px; margin: 0 auto;
+  align-items: center; min-height: calc(100vh - 80px);
+}
+
+.heroBadge {
+  display: inline-block; padding: 6px 16px; border-radius: 20px;
+  background: rgba(26,115,232,0.15); color: #7aadff;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 20px;
+  border: 1px solid rgba(26,115,232,0.3);
+}
+
+.heroTitle { font-size: 3.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.04em; margin-bottom: 20px; }
+.gradient {
+  background: linear-gradient(135deg, #1a73e8, #6c63ff, #00bcd4);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heroDesc { font-size: 1.1rem; color: rgba(255,255,255,0.6); line-height: 1.7; max-width: 480px; margin-bottom: 32px; }
+
+.heroCTA { display: flex; gap: 12px; margin-bottom: 48px; }
+
+.statsRow {
+  display: flex; align-items: center; gap: 24px;
+  padding: 20px 24px; border-radius: 16px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+}
+.statItem { text-align: center; }
+.statNum { display: block; font-size: 1.5rem; font-weight: 800; color: #7aadff; }
+.statTxt { font-size: 0.75rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.05em; }
+.divider { width: 1px; height: 36px; background: rgba(255,255,255,0.1); }
+
+/* X-ray Card */
+.heroVisual { perspective: 1000px; }
+.xrayCard {
+  background: rgba(255,255,255,0.05); border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+  backdrop-filter: blur(20px);
+  transform: rotateY(-5deg) rotateX(2deg);
+  transition: transform 0.4s ease;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.xrayCard:hover { transform: rotateY(0deg) rotateX(0deg); }
+
+.xrayHeader {
+  display: flex; align-items: center; gap: 6px;
+  padding: 12px 16px; background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.xrayTitle { margin-left: 8px; font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+
+.xrayBody { padding: 16px; display: flex; gap: 16px; }
+
+.xrayPlaceholder {
+  width: 180px; height: 200px; border-radius: 10px;
+  background: linear-gradient(135deg, #0a1628, #0d2040);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 0.75rem; color: rgba(255,255,255,0.3);
+  position: relative; overflow: hidden; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.scanLine {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #1a73e8, transparent);
+  animation: scan 3s ease-in-out infinite;
+}
+@keyframes scan { 0%,100% { top: 0; } 50% { top: 100%; } }
+
+.findingsList { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.findingRow { display: flex; align-items: center; gap: 8px; }
+.findingName { font-size: 0.78rem; color: rgba(255,255,255,0.7); width: 80px; flex-shrink: 0; }
+.findingBar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.findingFill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.findingPct { font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.5); width: 30px; text-align: right; }
+.flagBadge {
+  font-size: 0.6rem; padding: 2px 6px; border-radius: 4px;
+  background: rgba(217,48,37,0.2); color: #ff6b6b;
+  font-weight: 700; letter-spacing: 0.05em;
+}
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; padding: 40px 20px; }
+  .heroTitle { font-size: 2.5rem; }
+  .heroVisual { display: none; }
+}

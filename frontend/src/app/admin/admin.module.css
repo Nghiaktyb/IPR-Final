@@ -1,0 +1,61 @@
+.header { margin-bottom: 28px; }
+.headerBadge {
+  display: inline-block; padding: 4px 12px; border-radius: 6px;
+  background: rgba(26,115,232,0.2); color: #7aadff;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.statsGrid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-bottom: 32px;
+}
+.statCard {
+  background: var(--admin-card); border: 1px solid var(--admin-border);
+  border-radius: 14px; padding: 22px;
+}
+.statValue { font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.statLabel { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+
+.section { margin-bottom: 32px; }
+.section h2 { margin-bottom: 16px; font-size: 1.2rem; }
+
+.perfGrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;
+}
+.perfCard {
+  background: var(--admin-card); border: 1px solid var(--admin-border);
+  border-radius: 12px; padding: 18px;
+}
+.perfCard h4 { margin-bottom: 12px; font-size: 0.95rem; }
+.perfStats { display: flex; gap: 16px; margin-bottom: 10px; }
+.perfNum { display: block; font-size: 1.2rem; font-weight: 800; }
+.perfLabel { font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+.perfBar {
+  height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;
+}
+
+.navCards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.navCard {
+  background: var(--admin-card); border: 1px solid var(--admin-border);
+  border-radius: 14px; padding: 24px;
+  text-decoration: none; color: inherit;
+  transition: all 0.2s ease;
+}
+.navCard:hover {
+  border-color: #1a73e8; transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(26,115,232,0.15);
+}
+.navCard h3 { margin: 10px 0 6px; }
+.navCard p { font-size: 0.85rem; color: rgba(255,255,255,0.4); }
+.navIcon {
+  display: inline-flex; width: 44px; height: 44px;
+  border-radius: 12px; align-items: center; justify-content: center;
+  background: rgba(26,115,232,0.15); color: #7aadff;
+  font-weight: 800; font-size: 1rem;
+}
+
+@media (max-width: 800px) {
+  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+  .navCards { grid-template-columns: 1fr; }
+}
