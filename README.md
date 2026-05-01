@@ -39,7 +39,7 @@ Make sure the following are installed on your machine before starting:
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/Medix.git
+git clone https://github.com/Nghiaktyb/IPR-Final.git
 cd Medix
 ```
 
