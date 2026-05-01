@@ -1,95 +1,595 @@
-.viewer { max-width: 1400px; }
+/* ═══════════════════════════════════════════════════════
+   MedicX — Diagnostic Viewer — Premium Medical UI
+   ═══════════════════════════════════════════════════════ */
 
+/* ─── Main Layout ─────────────────────────────────────── */
+.viewer {
+  max-width: 1480px;
+  animation: viewerFadeIn 0.4s ease;
+}
+
+@keyframes viewerFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Header ──────────────────────────────────────────── */
 .viewerHeader {
-  display: flex; justify-content: space-between; align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 24px;
-}
-.caseInfo { color: var(--text-secondary); margin-top: 4px; font-size: 0.9rem; display: flex; align-items: center; }
-
-.viewerGrid {
-  display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; align-items: start;
+  gap: 16px;
 }
 
-/* Image Panel */
-.imagePanel {
-  background: var(--bg-card); border-radius: var(--radius-lg);
-  border: 1px solid var(--border); overflow: hidden;
+.headerLeft h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #1a73e8, #6c63ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
-.imageContainer {
-  position: relative; background: #0a1628;
-  display: flex; align-items: center; justify-content: center;
-  min-height: 450px;
-}
-.xrayImage {
-  max-width: 100%; max-height: 500px; object-fit: contain; display: block;
-}
-.heatmapLabel {
-  position: absolute; top: 12px; left: 12px;
-  padding: 4px 12px; border-radius: 6px;
-  background: rgba(0,0,0,0.7); color: white;
-  font-size: 0.8rem; font-weight: 600;
-}
-.imageControls {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  padding: 14px 16px; border-top: 1px solid var(--border);
-}
-.opacityControl {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 16px 14px; font-size: 0.85rem; color: var(--text-secondary);
-}
-.opacityControl input[type="range"] { flex: 1; }
 
-/* Insights Panel */
-.insightsPanel {
-  background: var(--bg-card); border-radius: var(--radius-lg);
-  border: 1px solid var(--border); overflow: hidden;
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  flex-wrap: wrap;
 }
-.insightsHeader {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 18px 20px; border-bottom: 1px solid var(--border-light);
+
+.metaChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
 }
-.thresholdControl {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+
+.metaChip .chipIcon {
   font-size: 0.85rem;
 }
-.thresholdControl label { white-space: nowrap; font-weight: 600; color: var(--text-secondary); }
-.thresholdControl input[type="range"] { flex: 1; }
 
+.headerActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Grid Layout ─────────────────────────────────────── */
+.viewerGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ─── Image Panel ─────────────────────────────────────── */
+.imagePanel {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition);
+}
+.imagePanel:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.imageToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-primary);
+}
+
+.toolbarTabs {
+  display: flex;
+  gap: 2px;
+  background: var(--border-light);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.tabBtn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.tabBtnActive {
+  background: var(--bg-card);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.toolbarInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.imageContainer {
+  position: relative;
+  background: #080e1d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  overflow: hidden;
+}
+
+.xrayImage {
+  max-width: 100%;
+  max-height: 540px;
+  object-fit: contain;
+  display: block;
+  transition: opacity 0.3s ease;
+}
+
+.heatmapOverlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  animation: overlaySlideIn 0.3s ease;
+}
+
+@keyframes overlaySlideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.heatmapDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f9a825;
+  animation: heatmapPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes heatmapPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(1.3); }
+}
+
+.noImageMsg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.9rem;
+}
+
+.noImageIcon {
+  font-size: 2.5rem;
+  opacity: 0.3;
+}
+
+/* Opacity slider strip */
+.opacityStrip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-light);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+}
+
+.opacityStrip span:first-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.opacityStrip input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary);
+}
+
+.opacityValue {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+  color: var(--primary);
+}
+
+/* ─── Insights Panel ──────────────────────────────────── */
+.insightsPanel {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition);
+}
+.insightsPanel:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.insightsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  background: linear-gradient(135deg, rgba(26,115,232,0.04), rgba(108,99,255,0.04));
+}
+
+.insightsTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.insightsTitle h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.insightsIcon {
+  font-size: 1.2rem;
+}
+
+.flagCount {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--danger-light);
+  color: var(--danger);
+  animation: flagPulse 2s ease-in-out infinite;
+}
+
+@keyframes flagPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.7; }
+}
+
+/* ─── Threshold / Sensitivity Control ─────────────────── */
+.thresholdControl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.82rem;
+  background: var(--bg-primary);
+}
+
+.thresholdLabel {
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thresholdLabel .tIcon {
+  font-size: 0.9rem;
+}
+
+.thresholdControl input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary);
+}
+
+.thresholdValue {
+  font-weight: 800;
+  color: var(--primary);
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Finding Cards ───────────────────────────────────── */
 .findingsList {
-  padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 520px;
+  overflow-y: auto;
 }
 
 .findingCard {
-  padding: 14px 16px; border-radius: var(--radius-md);
-  border: 1px solid var(--border-light); background: var(--bg-primary);
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
   transition: all var(--transition);
+  animation: cardSlideIn 0.35s ease backwards;
 }
-.findingCard:hover { border-color: var(--border); }
-.flagged { border-color: var(--danger); border-left: 3px solid var(--danger); background: var(--danger-light); }
+
+.findingCard:nth-child(1) { animation-delay: 0.05s; }
+.findingCard:nth-child(2) { animation-delay: 0.10s; }
+.findingCard:nth-child(3) { animation-delay: 0.15s; }
+.findingCard:nth-child(4) { animation-delay: 0.20s; }
+.findingCard:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes cardSlideIn {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.findingCard:hover {
+  border-color: var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.flagged {
+  border-color: var(--danger);
+  border-left: 4px solid var(--danger);
+  background: linear-gradient(135deg, var(--danger-light), rgba(252,232,230,0.3));
+}
 
 .findingTop {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
-.diseaseName { font-weight: 600; font-size: 0.95rem; }
-.confValue { font-weight: 800; font-size: 1.1rem; }
 
+.diseaseInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diseaseIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.iconDanger {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.iconWarning {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.iconNormal {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.diseaseName {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.flagBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--danger);
+  color: white;
+  margin-left: 6px;
+}
+
+.confBlock {
+  text-align: right;
+}
+
+.confValue {
+  font-weight: 800;
+  font-size: 1.2rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.confLabel {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+/* Confidence Bar */
+.confBarTrack {
+  width: 100%;
+  height: 6px;
+  background: var(--border-light);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.confBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Validation Row ──────────────────────────────────── */
 .validationRow {
-  display: flex; gap: 6px; margin-top: 10px; align-items: center;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
+.validationRow .heatmapBtn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.validationRow .heatmapBtn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.heatmapBtnActive {
+  background: var(--primary-light) !important;
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* ─── Doctor Notes ────────────────────────────────────── */
 .noteArea {
-  margin-top: 8px; font-size: 0.82rem; min-height: 50px;
-  resize: vertical; width: 100%;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  min-height: 44px;
+  resize: vertical;
+  width: 100%;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-light);
+  padding: 8px 12px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: border-color var(--transition);
 }
 
+.noteArea:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.noteArea::placeholder {
+  color: var(--text-muted);
+}
+
+/* ─── Clinical Notes ──────────────────────────────────── */
 .clinicalNotes {
-  padding: 16px 20px; border-top: 1px solid var(--border-light);
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-light);
+  background: linear-gradient(135deg, rgba(26,115,232,0.02), transparent);
 }
-.clinicalNotes h4 { margin-bottom: 6px; }
-.clinicalNotes p { color: var(--text-secondary); font-size: 0.9rem; }
 
-@media (max-width: 900px) {
-  .viewerGrid { grid-template-columns: 1fr; }
+.clinicalNotesTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.clinicalNotesTitle .cnIcon {
+  font-size: 0.95rem;
+}
+
+.clinicalNotes p {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+/* ─── Empty Findings ──────────────────────────────────── */
+.emptyFindings {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.emptyFindings .emptyIcon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+
+.emptyFindings p {
+  font-size: 0.9rem;
+}
+
+/* ─── Responsive ──────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .viewerGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .findingsList {
+    max-height: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .viewerHeader {
+    flex-direction: column;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .headerActions button {
+    flex: 1;
+  }
+
+  .toolbarTabs {
+    overflow-x: auto;
+  }
+
+  .imageContainer {
+    min-height: 280px;
+  }
+
+  .xrayImage {
+    max-height: 320px;
+  }
 }

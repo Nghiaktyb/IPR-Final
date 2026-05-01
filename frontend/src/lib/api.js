@@ -183,11 +183,13 @@ class ApiClient {
   }
 
   getCaseImageUrl(caseId) {
-    return `${this.base}/api/cases/${caseId}/image`;
+    const token = this.getToken();
+    return `${this.base}/api/cases/${caseId}/image?token=${encodeURIComponent(token)}`;
   }
 
   getHeatmapUrl(caseId, disease) {
-    return `${this.base}/api/cases/${caseId}/heatmap/${disease}`;
+    const token = this.getToken();
+    return `${this.base}/api/cases/${caseId}/heatmap/${disease}?token=${encodeURIComponent(token)}`;
   }
 
   // Reports

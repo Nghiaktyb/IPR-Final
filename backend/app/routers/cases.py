@@ -18,13 +18,25 @@ from app.schemas.case import (
     CaseResponse, CaseListResponse, FindingResponse, FindingValidate,
     InferenceResponse, InferenceResult,
 )
-from app.middleware.auth import get_current_user, log_action
+from app.middleware.auth import get_current_user, log_action, decode_token
 from app.services.ai_service import ai_model
 from app.services.gradcam_service import generate_all_heatmaps
 from app.config import settings
 from datetime import datetime, timezone
 
 router = APIRouter(prefix="/api/cases", tags=["Cases"])
+
+
+def _get_user_from_query_token(token: str, db: Session) -> User:
+    """Authenticate user from a query-string token (for <img> src usage)."""
+    payload = decode_token(token)
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".dcm", ".dicom"}
 
@@ -140,10 +152,11 @@ def get_case(
 @router.get("/{case_id}/image")
 def get_case_image(
     case_id: str,
+    token: str = Query(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
-    """Serve the original X-ray image file."""
+    """Serve the original X-ray image file. Auth via query param token."""
+    _get_user_from_query_token(token, db)
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -157,10 +170,11 @@ def get_case_image(
 def get_heatmap(
     case_id: str,
     disease: str,
+    token: str = Query(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
-    """Serve a Grad-CAM heatmap image for a specific disease."""
+    """Serve a Grad-CAM heatmap image for a specific disease. Auth via query param token."""
+    _get_user_from_query_token(token, db)
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")

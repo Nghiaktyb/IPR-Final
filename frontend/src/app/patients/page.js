@@ -76,7 +76,7 @@ export default function PatientsPage() {
               {patients.map(p => (
                 <tr key={p.id}>
                   <td style={{fontWeight:600}}>{p.full_name}</td>
-                  <td>{p.date_of_birth}</td>
+                  <td>{p.date_of_birth ? new Date(p.date_of_birth + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</td>
                   <td><span className="badge badge-primary">{p.sex}</span></td>
                   <td>{p.case_count}</td>
                   <td>{new Date(p.created_at).toLocaleDateString()}</td>

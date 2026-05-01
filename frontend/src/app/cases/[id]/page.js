@@ -17,6 +17,7 @@ export default function DiagnosticViewer() {
   const [conclusion, setConclusion] = useState('');
   const [generating, setGenerating] = useState(false);
   const [threshold, setThreshold] = useState(0.5);
+  const [imgError, setImgError] = useState(false);
 
   const loadCase = async () => {
     try {
@@ -78,162 +79,323 @@ export default function DiagnosticViewer() {
     return 'var(--primary)';
   };
 
+  const getSeverity = (conf) => {
+    if (conf >= 0.7) return 'danger';
+    if (conf >= 0.5) return 'warning';
+    return 'normal';
+  };
+
+  const getDiseaseIcon = (disease) => {
+    const icons = {
+      'Atelectasis': '🫁', 'Effusion': '💧', 'Pneumonia': '🦠',
+      'Nodule': '⚬', 'Mass': '⊕',
+    };
+    return icons[disease] || '🔬';
+  };
+
+  const statusConfig = {
+    pending:   { label: 'Pending', class: 'badge-warning' },
+    analyzed:  { label: 'Analyzed', class: 'badge-primary' },
+    finalized: { label: 'Finalized', class: 'badge-success' },
+  };
+
+  const st = statusConfig[caseData.status] || statusConfig.pending;
+
+  const currentImageSrc = activeHeatmap
+    ? api.getHeatmapUrl(id, activeHeatmap)
+    : imageUrl;
+
   return (
     <div className={styles.viewer}>
+      {/* ── Header ───────────────────────────────────── */}
       <div className={styles.viewerHeader}>
-        <div>
+        <div className={styles.headerLeft}>
           <h2>Diagnostic Viewer</h2>
-          <p className={styles.caseInfo}>
-            Case #{id.slice(0,8)} &bull; {caseData.patient_name} &bull;
-            <span className={`badge ${caseData.status === 'finalized' ? 'badge-success' : 'badge-primary'}`} style={{marginLeft:8}}>
-              {caseData.status}
+          <div className={styles.headerMeta}>
+            <span className={styles.metaChip}>
+              <span className={styles.chipIcon}>📋</span>
+              Case #{id.slice(0,8)}
             </span>
-          </p>
+            <span className={styles.metaChip}>
+              <span className={styles.chipIcon}>👤</span>
+              {caseData.patient_name || 'Unknown'}
+            </span>
+            <span className={`badge ${st.class}`}>
+              {st.label}
+            </span>
+            {caseData.uploaded_by_name && (
+              <span className={styles.metaChip}>
+                <span className={styles.chipIcon}>🩺</span>
+                Dr. {caseData.uploaded_by_name}
+              </span>
+            )}
+            <span className={styles.metaChip}>
+              <span className={styles.chipIcon}>📅</span>
+              {new Date(caseData.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </span>
+          </div>
         </div>
-        <div style={{display:'flex', gap:8}}>
-          <button onClick={() => setShowReport(true)} className="btn btn-primary">Generate Report</button>
+        <div className={styles.headerActions}>
+          <button onClick={handleRerun} className="btn btn-secondary btn-sm">
+            🔄 Re-analyze
+          </button>
+          <button onClick={() => setShowReport(true)} className="btn btn-primary">
+            📄 Generate Report
+          </button>
         </div>
       </div>
 
+      {/* ── Content Grid ─────────────────────────────── */}
       <div className={styles.viewerGrid}>
-        {/* Left: Image Viewer */}
+
+        {/* ─ Left: Image Viewer ─ */}
         <div className={styles.imagePanel}>
+          {/* Toolbar with tabs */}
+          <div className={styles.imageToolbar}>
+            <div className={styles.toolbarTabs}>
+              <button
+                className={`${styles.tabBtn} ${!activeHeatmap ? styles.tabBtnActive : ''}`}
+                onClick={() => { setActiveHeatmap(null); setImgError(false); }}
+              >
+                🖼 Original
+              </button>
+              {findings.map(f => (
+                <button
+                  key={f.disease_name}
+                  className={`${styles.tabBtn} ${activeHeatmap === f.disease_name ? styles.tabBtnActive : ''}`}
+                  onClick={() => {
+                    setActiveHeatmap(activeHeatmap === f.disease_name ? null : f.disease_name);
+                    setImgError(false);
+                  }}
+                >
+                  {getDiseaseIcon(f.disease_name)} {f.disease_name}
+                </button>
+              ))}
+            </div>
+            <div className={styles.toolbarInfo}>
+              {caseData.image_filename && (
+                <span>{caseData.image_filename}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Image display */}
           <div className={styles.imageContainer}>
-            <img
-              src={activeHeatmap ? api.getHeatmapUrl(id, activeHeatmap) : imageUrl}
-              alt="X-ray"
-              className={styles.xrayImage}
-              style={activeHeatmap ? {opacity: heatmapOpacity * 2} : {}}
-              crossOrigin="anonymous"
-            />
-            {activeHeatmap && (
-              <div className={styles.heatmapLabel}>
+            {imgError ? (
+              <div className={styles.noImageMsg}>
+                <span className={styles.noImageIcon}>🖼️</span>
+                <span>{activeHeatmap ? `Heatmap not available for ${activeHeatmap}` : 'Image not available'}</span>
+              </div>
+            ) : (
+              <img
+                src={currentImageSrc}
+                alt={activeHeatmap ? `${activeHeatmap} heatmap` : 'X-ray image'}
+                className={styles.xrayImage}
+                style={activeHeatmap ? { opacity: Math.min(heatmapOpacity * 1.5 + 0.25, 1) } : {}}
+                onError={() => setImgError(true)}
+              />
+            )}
+
+            {activeHeatmap && !imgError && (
+              <div className={styles.heatmapOverlay}>
+                <span className={styles.heatmapDot}></span>
                 Heatmap: {activeHeatmap}
               </div>
             )}
           </div>
 
-          <div className={styles.imageControls}>
-            <button className={`btn btn-sm ${!activeHeatmap ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveHeatmap(null)}>
-              Original
-            </button>
-            {findings.map(f => (
-              <button
-                key={f.disease_name}
-                className={`btn btn-sm ${activeHeatmap === f.disease_name ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setActiveHeatmap(f.disease_name === activeHeatmap ? null : f.disease_name)}
-              >
-                {f.disease_name}
-              </button>
-            ))}
-          </div>
-
-          {activeHeatmap && (
-            <div className={styles.opacityControl}>
+          {/* Opacity slider for heatmap */}
+          {activeHeatmap && !imgError && (
+            <div className={styles.opacityStrip}>
               <span>Opacity</span>
-              <input type="range" min="0.1" max="1" step="0.05" value={heatmapOpacity} onChange={e => setHeatmapOpacity(parseFloat(e.target.value))} />
-              <span>{Math.round(heatmapOpacity * 100)}%</span>
+              <input
+                type="range" min="0.1" max="1" step="0.05"
+                value={heatmapOpacity}
+                onChange={e => setHeatmapOpacity(parseFloat(e.target.value))}
+              />
+              <span className={styles.opacityValue}>{Math.round(heatmapOpacity * 100)}%</span>
             </div>
           )}
         </div>
 
-        {/* Right: AI Insights */}
+        {/* ─ Right: AI Insights ─ */}
         <div className={styles.insightsPanel}>
+          {/* Header */}
           <div className={styles.insightsHeader}>
-            <h3>AI Insights</h3>
+            <div className={styles.insightsTitle}>
+              <span className={styles.insightsIcon}>🧠</span>
+              <h3>AI Diagnostic Insights</h3>
+            </div>
             {flagged.length > 0 && (
-              <span className="badge badge-danger">{flagged.length} Flagged</span>
+              <span className={styles.flagCount}>
+                ⚠ {flagged.length} Flagged
+              </span>
             )}
           </div>
 
+          {/* Sensitivity threshold */}
           <div className={styles.thresholdControl}>
-            <label>Sensitivity: {Math.round(threshold * 100)}%</label>
-            <input type="range" min="0.1" max="0.9" step="0.05" value={threshold} onChange={e => setThreshold(parseFloat(e.target.value))} />
-            <button className="btn btn-sm btn-secondary" onClick={handleRerun}>Re-analyze</button>
+            <span className={styles.thresholdLabel}>
+              <span className={styles.tIcon}>🎯</span> Sensitivity
+            </span>
+            <input
+              type="range" min="0.1" max="0.9" step="0.05"
+              value={threshold}
+              onChange={e => setThreshold(parseFloat(e.target.value))}
+            />
+            <span className={styles.thresholdValue}>{Math.round(threshold * 100)}%</span>
           </div>
 
-          <div className={styles.findingsList}>
-            {findings.map(f => (
-              <div key={f.id} className={`${styles.findingCard} ${f.is_flagged === 'true' ? styles.flagged : ''}`}>
-                <div className={styles.findingTop}>
-                  <div>
-                    <span className={styles.diseaseName}>{f.disease_name}</span>
-                    {f.is_flagged === 'true' && <span className="badge badge-danger" style={{marginLeft:6}}>FLAGGED</span>}
+          {/* Findings list */}
+          {findings.length === 0 ? (
+            <div className={styles.emptyFindings}>
+              <div className={styles.emptyIcon}>🔍</div>
+              <p>No findings available. Upload an X-ray to get AI analysis.</p>
+            </div>
+          ) : (
+            <div className={styles.findingsList}>
+              {findings.map(f => {
+                const severity = getSeverity(f.confidence_score);
+                const isFlagged = f.is_flagged === 'true';
+
+                return (
+                  <div
+                    key={f.id}
+                    className={`${styles.findingCard} ${isFlagged ? styles.flagged : ''}`}
+                  >
+                    {/* Disease name + confidence */}
+                    <div className={styles.findingTop}>
+                      <div className={styles.diseaseInfo}>
+                        <div className={`${styles.diseaseIcon} ${
+                          severity === 'danger' ? styles.iconDanger :
+                          severity === 'warning' ? styles.iconWarning :
+                          styles.iconNormal
+                        }`}>
+                          {getDiseaseIcon(f.disease_name)}
+                        </div>
+                        <div>
+                          <span className={styles.diseaseName}>
+                            {f.disease_name}
+                          </span>
+                          {isFlagged && (
+                            <span className={styles.flagBadge}>FLAGGED</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.confBlock}>
+                        <div className={styles.confValue} style={{ color: getConfColor(f.confidence_score) }}>
+                          {(f.confidence_score * 100).toFixed(1)}%
+                        </div>
+                        <div className={styles.confLabel}>confidence</div>
+                      </div>
+                    </div>
+
+                    {/* Confidence bar */}
+                    <div className={styles.confBarTrack}>
+                      <div
+                        className={styles.confBarFill}
+                        style={{
+                          width: `${f.confidence_score * 100}%`,
+                          background: `linear-gradient(90deg, ${getConfColor(f.confidence_score)}, ${getConfColor(f.confidence_score)}cc)`,
+                        }}
+                      />
+                    </div>
+
+                    {/* Validation buttons + heatmap toggle */}
+                    <div className={styles.validationRow}>
+                      {f.validation_status === 'pending' ? (
+                        <>
+                          <button
+                            className="btn btn-success btn-sm"
+                            disabled={validating[f.id]}
+                            onClick={() => handleValidate(f.id, 'accepted')}
+                          >✓ Accept</button>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            disabled={validating[f.id]}
+                            onClick={() => handleValidate(f.id, 'rejected')}
+                          >✕ Reject</button>
+                        </>
+                      ) : (
+                        <span className={`badge ${f.validation_status === 'accepted' ? 'badge-success' : 'badge-danger'}`}>
+                          {f.validation_status === 'accepted' ? '✓ Accepted' : '✕ Rejected'}
+                        </span>
+                      )}
+                      <button
+                        className={`${styles.heatmapBtn || ''} ${activeHeatmap === f.disease_name ? styles.heatmapBtnActive : ''}`}
+                        onClick={() => {
+                          setActiveHeatmap(activeHeatmap === f.disease_name ? null : f.disease_name);
+                          setImgError(false);
+                        }}
+                        style={{
+                          marginLeft: 'auto',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '5px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          background: activeHeatmap === f.disease_name ? 'var(--primary-light)' : 'var(--bg-card)',
+                          color: activeHeatmap === f.disease_name ? 'var(--primary)' : 'var(--text-secondary)',
+                          border: `1px solid ${activeHeatmap === f.disease_name ? 'var(--primary)' : 'var(--border)'}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        🔥 {activeHeatmap === f.disease_name ? 'Hide' : 'View'} Heatmap
+                      </button>
+                    </div>
+
+                    {/* Doctor notes */}
+                    <textarea
+                      className={styles.noteArea}
+                      placeholder="Add clinical notes..."
+                      value={notes[f.id] || f.doctor_notes || ''}
+                      onChange={e => setNotes(n => ({...n, [f.id]: e.target.value}))}
+                      rows={2}
+                    />
                   </div>
-                  <span className={styles.confValue} style={{color: getConfColor(f.confidence_score)}}>
-                    {(f.confidence_score * 100).toFixed(1)}%
-                  </span>
-                </div>
+                );
+              })}
+            </div>
+          )}
 
-                <div className="confidence-bar">
-                  <div className="confidence-bar-fill" style={{
-                    width: `${f.confidence_score * 100}%`,
-                    background: getConfColor(f.confidence_score),
-                  }}></div>
-                </div>
-
-                <div className={styles.validationRow}>
-                  {f.validation_status === 'pending' ? (
-                    <>
-                      <button
-                        className="btn btn-success btn-sm"
-                        disabled={validating[f.id]}
-                        onClick={() => handleValidate(f.id, 'accepted')}
-                      >Accept</button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        disabled={validating[f.id]}
-                        onClick={() => handleValidate(f.id, 'rejected')}
-                      >Reject</button>
-                    </>
-                  ) : (
-                    <span className={`badge ${f.validation_status === 'accepted' ? 'badge-success' : 'badge-danger'}`}>
-                      {f.validation_status}
-                    </span>
-                  )}
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setActiveHeatmap(f.disease_name === activeHeatmap ? null : f.disease_name)}
-                  >View Heatmap</button>
-                </div>
-
-                <textarea
-                  className={`input ${styles.noteArea}`}
-                  placeholder="Doctor's notes..."
-                  value={notes[f.id] || f.doctor_notes || ''}
-                  onChange={e => setNotes(n => ({...n, [f.id]: e.target.value}))}
-                  rows={2}
-                />
-              </div>
-            ))}
-          </div>
-
+          {/* Clinical notes from case */}
           {caseData.clinical_notes && (
             <div className={styles.clinicalNotes}>
-              <h4>Clinical Notes</h4>
+              <div className={styles.clinicalNotesTitle}>
+                <span className={styles.cnIcon}>📝</span>
+                Clinical Notes
+              </div>
               <p>{caseData.clinical_notes}</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Report Modal */}
+      {/* ── Report Modal ─────────────────────────────── */}
       {showReport && (
         <div className="modal-overlay" onClick={() => setShowReport(false)}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth:550}}>
             <div className="modal-header">
-              <h3>Generate Report</h3>
-              <button onClick={() => setShowReport(false)} className="btn btn-ghost btn-icon">X</button>
+              <h3>📄 Generate Diagnostic Report</h3>
+              <button onClick={() => setShowReport(false)} className="btn btn-ghost btn-icon">✕</button>
             </div>
             <div className="input-group" style={{marginBottom:16}}>
               <label>Clinical Conclusion</label>
-              <textarea className="input textarea" value={conclusion} onChange={e => setConclusion(e.target.value)}
-                placeholder="Final diagnostic assessment..." rows={4} />
+              <textarea
+                className="input textarea"
+                value={conclusion}
+                onChange={e => setConclusion(e.target.value)}
+                placeholder="Final diagnostic assessment and recommendations..."
+                rows={4}
+              />
             </div>
             <div className="modal-footer">
               <button onClick={() => setShowReport(false)} className="btn btn-secondary">Cancel</button>
               <button onClick={handleReport} className="btn btn-primary" disabled={generating}>
-                {generating ? 'Generating PDF...' : 'Generate & Download'}
+                {generating ? '⏳ Generating PDF...' : '📥 Generate & Download'}
               </button>
             </div>
           </div>
