@@ -46,6 +46,12 @@ async def create_case(
     request: Request,
     patient_id: str = Form(...),
     clinical_notes: Optional[str] = Form(None),
+    patient_weight: Optional[float] = Form(None),
+    patient_height: Optional[float] = Form(None),
+    blood_pressure: Optional[str] = Form(None),
+    heart_rate: Optional[int] = Form(None),
+    temperature: Optional[float] = Form(None),
+    reason_for_visit: Optional[str] = Form(None),
     image: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -87,6 +93,12 @@ async def create_case(
         image_path=filepath,
         image_filename=image.filename,
         clinical_notes=clinical_notes,
+        patient_weight=patient_weight,
+        patient_height=patient_height,
+        blood_pressure=blood_pressure,
+        heart_rate=heart_rate,
+        temperature=temperature,
+        reason_for_visit=reason_for_visit,
         status=CaseStatus.PENDING,
     )
     db.add(case)
@@ -246,6 +258,8 @@ def validate_finding(
 
     finding.validation_status = data.validation_status
     finding.doctor_notes = data.doctor_notes
+    if data.rejection_drawing_paths is not None:
+        finding.rejection_drawing_paths = data.rejection_drawing_paths
     finding.validated_by = current_user.id
     finding.validated_at = datetime.now(timezone.utc)
 
@@ -332,6 +346,12 @@ def _case_to_response(db: Session, case: Case) -> CaseResponse:
         uploaded_by=case.uploaded_by,
         image_filename=case.image_filename,
         clinical_notes=case.clinical_notes,
+        patient_weight=case.patient_weight,
+        patient_height=case.patient_height,
+        blood_pressure=case.blood_pressure,
+        heart_rate=case.heart_rate,
+        temperature=case.temperature,
+        reason_for_visit=case.reason_for_visit,
         status=case.status,
         sensitivity_threshold=case.sensitivity_threshold,
         findings=[FindingResponse.model_validate(f) for f in findings],

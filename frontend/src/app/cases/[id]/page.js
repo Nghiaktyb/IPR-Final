@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import styles from './viewer.module.css';
@@ -44,6 +44,13 @@ export default function DiagnosticViewer() {
   const [threshold, setThreshold] = useState(0.5);
   const [imgError, setImgError] = useState(false);
 
+  // Rejection drawing state
+  const [rejectingFinding, setRejectingFinding] = useState(null);
+  const [drawingPaths, setDrawingPaths] = useState([]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [rejectNotes, setRejectNotes] = useState('');
+  const canvasRef = useRef(null);
+
   const loadCase = async () => {
     try {
       const data = await api.getCase(id);
@@ -55,17 +62,69 @@ export default function DiagnosticViewer() {
 
   useEffect(() => { loadCase(); }, [id]);
 
-  const handleValidate = async (findingId, status) => {
+  const handleValidate = async (findingId, status, rejectionPaths = null, rejectionNotes = null) => {
     setValidating(v => ({...v, [findingId]: true}));
     try {
       await api.validateFinding(findingId, {
         validation_status: status,
-        doctor_notes: notes[findingId] || null,
+        doctor_notes: status === 'rejected' ? rejectionNotes : (notes[findingId] || null),
+        rejection_drawing_paths: rejectionPaths,
       });
       await loadCase();
     } catch (e) { alert(e.message); }
     finally { setValidating(v => ({...v, [findingId]: false})); }
   };
+
+  const startDrawing = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setDrawingPaths(prev => [...prev, [{x, y}]]);
+    setIsDrawing(true);
+  };
+
+  const draw = (e) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setDrawingPaths(prev => {
+      const newPaths = [...prev];
+      newPaths[newPaths.length - 1].push({x, y});
+      return newPaths;
+    });
+  };
+
+  const stopDrawing = () => setIsDrawing(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !rejectingFinding) return;
+    const ctx = canvas.getContext('2d');
+    const { width, height } = canvas.getBoundingClientRect();
+    canvas.width = width;
+    canvas.height = height;
+    
+    ctx.clearRect(0, 0, width, height);
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    drawingPaths.forEach(path => {
+      if (path.length === 0) return;
+      ctx.beginPath();
+      ctx.moveTo(path[0].x * width, path[0].y * height);
+      for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x * width, path[i].y * height);
+      }
+      ctx.stroke();
+    });
+  }, [drawingPaths, rejectingFinding]);
 
   const handleRerun = async () => {
     setLoading(true);
@@ -226,6 +285,20 @@ export default function DiagnosticViewer() {
                 Heatmap: {activeHeatmap}
               </div>
             )}
+
+            {/* Render any rejection drawing if this heatmap is active and finding is rejected */}
+            {activeHeatmap && findings.find(f => f.disease_name === activeHeatmap)?.validation_status === 'rejected' && findings.find(f => f.disease_name === activeHeatmap)?.rejection_drawing_paths && (
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', zIndex: 10}}>
+                {findings.find(f => f.disease_name === activeHeatmap).rejection_drawing_paths.map((path, i) => (
+                  <polyline 
+                    key={i} 
+                    points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} 
+                    fill="none" stroke="#ff0000" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" 
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
+              </svg>
+            )}
           </div>
 
           {/* Opacity slider for heatmap */}
@@ -244,6 +317,28 @@ export default function DiagnosticViewer() {
 
         {/* ─ Right: AI Insights ─ */}
         <div className={styles.insightsPanel}>
+          {/* Patient Vitals Card */}
+          {(caseData.patient_weight || caseData.patient_height || caseData.blood_pressure || caseData.heart_rate || caseData.temperature || caseData.reason_for_visit || caseData.clinical_notes) && (
+            <div className="card" style={{padding: 16, marginBottom: 20, backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-light)'}}>
+              <h4 style={{marginBottom: 12, display:'flex', alignItems:'center', gap: 8, color:'var(--text-primary)'}}>
+                <ClipboardList size={16} /> Clinical Context
+              </h4>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: '8px 12px', fontSize: '0.85rem'}}>
+                {caseData.reason_for_visit && <div style={{gridColumn:'1/-1'}}><b>Reason:</b> {caseData.reason_for_visit}</div>}
+                {caseData.patient_weight && <div><b>Weight:</b> {caseData.patient_weight} kg</div>}
+                {caseData.patient_height && <div><b>Height:</b> {caseData.patient_height} cm</div>}
+                {caseData.blood_pressure && <div><b>BP:</b> {caseData.blood_pressure}</div>}
+                {caseData.heart_rate && <div><b>HR:</b> {caseData.heart_rate} bpm</div>}
+                {caseData.temperature && <div><b>Temp:</b> {caseData.temperature} °C</div>}
+                {caseData.clinical_notes && (
+                  <div style={{gridColumn:'1/-1', marginTop: 4, paddingTop: 8, borderTop: '1px solid var(--border-light)'}}>
+                    <b>Notes:</b> <span style={{color:'var(--text-secondary)'}}>{caseData.clinical_notes}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <div className={styles.insightsHeader}>
             <div className={styles.insightsTitle}>
@@ -337,7 +432,11 @@ export default function DiagnosticViewer() {
                           <button
                             className="btn btn-danger btn-sm"
                             disabled={validating[f.id]}
-                            onClick={() => handleValidate(f.id, 'rejected')}
+                            onClick={() => {
+                              setRejectingFinding(f);
+                              setDrawingPaths([]);
+                              setRejectNotes(notes[f.id] || f.doctor_notes || '');
+                            }}
                           ><X size={14} /> Reject</button>
                         </>
                       ) : (
@@ -420,6 +519,67 @@ export default function DiagnosticViewer() {
               <button onClick={() => setShowReport(false)} className="btn btn-secondary">Cancel</button>
               <button onClick={handleReport} className="btn btn-primary" disabled={generating}>
                 {generating ? <><Loader size={14} className="spin" /> Generating PDF...</> : <><Download size={14} /> Generate &amp; Download</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Rejection Modal ──────────────────────────── */}
+      {rejectingFinding && (
+        <div className="modal-overlay" onClick={() => setRejectingFinding(null)} style={{zIndex: 9999}}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: '900px'}}>
+            <div className="modal-header">
+              <h3><PenLine size={18} style={{verticalAlign: 'middle', marginRight: 6}} /> Reject Finding: {rejectingFinding.disease_name}</h3>
+              <button onClick={() => setRejectingFinding(null)} className="btn btn-ghost btn-icon"><X size={18} /></button>
+            </div>
+            <div className="modal-body" style={{display: 'flex', gap: '20px', flexDirection: 'column'}}>
+              <p style={{fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Draw directly on the image to highlight the area of misdiagnosis, and provide a clinical note explaining the rejection.</p>
+              
+              <div style={{display: 'flex', gap: '20px', alignItems: 'flex-start'}}>
+                <div style={{position: 'relative', flex: 1, border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', background: '#000'}}>
+                   <img src={currentImageSrc} alt="X-ray" style={{width: '100%', display: 'block'}} draggable={false} />
+                   <canvas 
+                     ref={canvasRef}
+                     onPointerDown={startDrawing}
+                     onPointerMove={draw}
+                     onPointerUp={stopDrawing}
+                     onPointerOut={stopDrawing}
+                     style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'crosshair', touchAction: 'none'}}
+                   />
+                </div>
+                
+                <div style={{flex: '0 0 300px', display: 'flex', flexDirection: 'column', gap: '15px'}}>
+                   <div>
+                     <label className="input-label" style={{marginBottom: '8px', display: 'block'}}>Clinical Note</label>
+                     <textarea
+                       className="input textarea"
+                       rows={12}
+                       placeholder="Explain why this AI finding is incorrect..."
+                       value={rejectNotes}
+                       onChange={e => setRejectNotes(e.target.value)}
+                     />
+                   </div>
+                   <button 
+                     className="btn btn-secondary" 
+                     onClick={() => setDrawingPaths([])}
+                   >
+                     Clear Drawing
+                   </button>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setRejectingFinding(null)}>Cancel</button>
+              <button 
+                className="btn btn-danger" 
+                onClick={async () => {
+                  await handleValidate(rejectingFinding.id, 'rejected', drawingPaths, rejectNotes);
+                  setRejectingFinding(null);
+                }}
+                disabled={validating[rejectingFinding.id]}
+              >
+                {validating[rejectingFinding.id] ? <Loader size={16} className="spin" /> : 'Confirm Rejection'}
               </button>
             </div>
           </div>

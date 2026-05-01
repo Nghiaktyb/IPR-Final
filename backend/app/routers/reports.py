@@ -11,7 +11,7 @@ from app.models.case import Case, Finding, CaseStatus
 from app.models.patient import Patient
 from app.models.report import Report
 from app.schemas.report import ReportCreate, ReportResponse
-from app.middleware.auth import get_current_user, log_action
+from app.middleware.auth import get_current_user, log_action, decode_token
 from app.services.report_service import generate_pdf_report
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
@@ -23,10 +23,36 @@ def generate_report(case_id: str, data: ReportCreate, request: Request, db: Sess
         raise HTTPException(status_code=404, detail="Case not found")
     patient = db.query(Patient).filter(Patient.id == case.patient_id).first()
     findings = db.query(Finding).filter(Finding.case_id == case_id).all()
-    findings_data = [{"disease_name": f.disease_name, "confidence_score": f.confidence_score, "validation_status": f.validation_status.value, "is_flagged": f.is_flagged, "doctor_notes": f.doctor_notes} for f in findings]
+    findings_data = [{
+        "disease_name": f.disease_name, 
+        "confidence_score": f.confidence_score, 
+        "validation_status": f.validation_status.value, 
+        "is_flagged": f.is_flagged, 
+        "doctor_notes": f.doctor_notes,
+        "heatmap_path": f.heatmap_path or (case.heatmap_paths.get(f.disease_name) if case.heatmap_paths else None),
+        "rejection_drawing_paths": f.rejection_drawing_paths
+    } for f in findings]
     pdf_path = generate_pdf_report(
-        case_data={"id": case.id, "clinical_notes": case.clinical_notes, "sensitivity_threshold": case.sensitivity_threshold},
-        patient_data={"id": patient.id, "full_name": patient.full_name, "date_of_birth": str(patient.date_of_birth), "sex": patient.sex.value},
+        case_data={
+            "id": case.id,
+            "clinical_notes": case.clinical_notes,
+            "sensitivity_threshold": case.sensitivity_threshold,
+            "image_path": case.image_path,
+            "patient_weight": case.patient_weight,
+            "patient_height": case.patient_height,
+            "blood_pressure": case.blood_pressure,
+            "heart_rate": case.heart_rate,
+            "temperature": case.temperature,
+            "reason_for_visit": case.reason_for_visit,
+        },
+        patient_data={
+            "id": patient.id,
+            "full_name": patient.full_name,
+            "date_of_birth": str(patient.date_of_birth),
+            "sex": patient.sex.value,
+            "blood_type": patient.blood_type,
+            "medical_history": patient.medical_history,
+        },
         findings=findings_data, conclusion=data.conclusion, signature=data.digital_signature or current_user.full_name,
     )
     existing = db.query(Report).filter(Report.case_id == case_id).first()
@@ -55,6 +81,27 @@ def download_report(report_id: str, db: Session = Depends(get_db), current_user:
     if not report.pdf_path or not os.path.exists(report.pdf_path):
         raise HTTPException(status_code=404, detail="PDF file not found")
     log_action(db, current_user.id, "download_report", "report", report.id)
+    return FileResponse(report.pdf_path, media_type="application/pdf", filename=os.path.basename(report.pdf_path))
+
+def _get_user_from_query_token(token: str, db: Session) -> User:
+    payload = decode_token(token)
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user
+
+@router.get("/case/{case_id}/download")
+def download_report_by_case(case_id: str, token: str, db: Session = Depends(get_db)):
+    user = _get_user_from_query_token(token, db)
+    report = db.query(Report).filter(Report.case_id == case_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if not report.pdf_path or not os.path.exists(report.pdf_path):
+        raise HTTPException(status_code=404, detail="PDF file not found")
+    log_action(db, user.id, "download_report", "report", report.id)
     return FileResponse(report.pdf_path, media_type="application/pdf", filename=os.path.basename(report.pdf_path))
 
 @router.get("/case/{case_id}", response_model=ReportResponse)

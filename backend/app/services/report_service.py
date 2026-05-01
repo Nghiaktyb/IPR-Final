@@ -8,12 +8,43 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm, inch
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage,
-    HRFlowable, PageBreak,
+    HRFlowable, PageBreak, KeepTogether,
 )
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 import os
 from datetime import datetime
+from PIL import Image as PILImage, ImageDraw
 from app.config import settings
+
+def _create_annotated_image(img_path: str, drawing_paths: list, out_path: str) -> bool:
+    try:
+        with PILImage.open(img_path) as img:
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            draw = ImageDraw.Draw(img)
+            width, height = img.size
+            for path in drawing_paths:
+                if not path or len(path) < 2:
+                    continue
+                xy = [(p['x'] * width, p['y'] * height) for p in path]
+                line_width = max(3, int(width * 0.005))
+                draw.line(xy, fill="red", width=line_width, joint="curve")
+            img.save(out_path, format="JPEG", quality=90)
+            return True
+    except Exception as e:
+        print(f"Error annotating image: {e}")
+        return False
+
+def _get_scaled_image(path: str, max_width: float):
+    try:
+        with PILImage.open(path) as img:
+            w, h = img.size
+            aspect = h / float(w)
+            draw_width = min(max_width, w)
+            draw_height = draw_width * aspect
+            return RLImage(path, width=draw_width, height=draw_height)
+    except:
+        return None
 
 
 def generate_pdf_report(
@@ -112,6 +143,7 @@ def generate_pdf_report(
         ["Full Name", patient_data.get("full_name", "N/A")],
         ["Date of Birth", str(patient_data.get("date_of_birth", "N/A"))],
         ["Sex", patient_data.get("sex", "N/A").capitalize()],
+        ["Blood Type", patient_data.get("blood_type") or "Unknown"],
         ["Patient ID", patient_data.get("id", "N/A")[:8] + "..."],
     ]
     patient_table = Table(patient_table_data, colWidths=[40 * mm, 120 * mm])
@@ -125,6 +157,41 @@ def generate_pdf_report(
     ]))
     elements.append(patient_table)
     elements.append(Spacer(1, 4 * mm))
+
+    if patient_data.get("medical_history"):
+        elements.append(Paragraph("<b>Medical History:</b> " + patient_data["medical_history"], body_style))
+        elements.append(Spacer(1, 4 * mm))
+
+    # Visit Vitals
+    vitals_data = []
+    if case_data.get("patient_weight"): vitals_data.append(["Weight:", f"{case_data['patient_weight']} kg"])
+    if case_data.get("patient_height"): vitals_data.append(["Height:", f"{case_data['patient_height']} cm"])
+    if case_data.get("blood_pressure"): vitals_data.append(["BP:", case_data["blood_pressure"]])
+    if case_data.get("heart_rate"): vitals_data.append(["HR:", f"{case_data['heart_rate']} bpm"])
+    if case_data.get("temperature"): vitals_data.append(["Temp:", f"{case_data['temperature']} °C"])
+    if case_data.get("reason_for_visit"): vitals_data.append(["Reason:", case_data["reason_for_visit"]])
+
+    if vitals_data:
+        elements.append(Paragraph("Encounter Vitals", section_style))
+        v_table = Table(vitals_data, colWidths=[20 * mm, 140 * mm])
+        v_table.setStyle(TableStyle([
+            ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(v_table)
+        elements.append(Spacer(1, 4 * mm))
+
+
+    # Original X-Ray
+    image_path = case_data.get("image_path")
+    if image_path and os.path.exists(image_path):
+        elements.append(Paragraph("Original Radiograph", section_style))
+        img_flowable = _get_scaled_image(image_path, 150 * mm)
+        if img_flowable:
+            elements.append(img_flowable)
+        elements.append(Spacer(1, 6 * mm))
 
     # Clinical Notes
     if case_data.get("clinical_notes"):
@@ -166,12 +233,40 @@ def generate_pdf_report(
     elements.append(findings_table)
     elements.append(Spacer(1, 4 * mm))
 
-    # Doctor's Notes for each finding
+    # Detailed Findings (Heatmaps and Rejections)
+    elements.append(Spacer(1, 6 * mm))
+    elements.append(Paragraph("Detailed Findings & Annotations", section_style))
+    
     for f in findings:
+        finding_elements = []
+        finding_elements.append(Paragraph(f"<b>{f.get('disease_name')}</b> — {f.get('validation_status', 'pending').upper()}", section_style))
         if f.get("doctor_notes"):
-            elements.append(Paragraph(
-                f"<b>{f['disease_name']}:</b> {f['doctor_notes']}", body_style
-            ))
+            finding_elements.append(Paragraph(f"<b>Clinical Note:</b> {f['doctor_notes']}", body_style))
+            
+        drawing_paths = f.get("rejection_drawing_paths")
+        heatmap_path = f.get("heatmap_path")
+        
+        img_added = False
+        if drawing_paths and image_path and os.path.exists(image_path):
+            annotated_path = os.path.join(output_dir, f"annotated_{case_data['id'][:8]}_{f['disease_name']}.jpg")
+            if _create_annotated_image(image_path, drawing_paths, annotated_path):
+                img_flowable = _get_scaled_image(annotated_path, 140 * mm)
+                if img_flowable:
+                    finding_elements.append(img_flowable)
+                    img_added = True
+                    
+        if not img_added and (f.get("is_flagged") == "true" or f.get("validation_status") == "accepted") and heatmap_path and os.path.exists(heatmap_path):
+            img_flowable = _get_scaled_image(heatmap_path, 140 * mm)
+            if img_flowable:
+                finding_elements.append(img_flowable)
+                img_added = True
+                
+        if img_added:
+            finding_elements.append(Spacer(1, 8 * mm))
+        else:
+            finding_elements.append(Spacer(1, 4 * mm))
+            
+        elements.append(KeepTogether(finding_elements))
 
     # Conclusion
     if conclusion:

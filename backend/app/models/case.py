@@ -5,7 +5,7 @@ A Finding represents one disease prediction that can be validated by a doctor.
 """
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Text, Float, DateTime, ForeignKey, JSON, Enum as SAEnum
+from sqlalchemy import Column, String, Text, Float, Integer, DateTime, ForeignKey, JSON, Enum as SAEnum
 from sqlalchemy.orm import relationship
 from app.database import Base
 import enum
@@ -38,6 +38,15 @@ class Case(Base):
     ai_results = Column(JSON, nullable=True)         # Raw AI output
     heatmap_paths = Column(JSON, nullable=True)       # Dict of disease -> heatmap path
     sensitivity_threshold = Column(Float, default=0.5)
+    
+    # Visit Specific Vitals
+    patient_weight = Column(Float, nullable=True)
+    patient_height = Column(Float, nullable=True)
+    blood_pressure = Column(String(20), nullable=True)
+    heart_rate = Column(Integer, nullable=True)
+    temperature = Column(Float, nullable=True)
+    reason_for_visit = Column(Text, nullable=True)
+
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -63,6 +72,7 @@ class Finding(Base):
     validation_status = Column(SAEnum(ValidationStatus), default=ValidationStatus.PENDING, nullable=False)
     validated_by = Column(String(36), ForeignKey("users.id"), nullable=True)
     doctor_notes = Column(Text, nullable=True)
+    rejection_drawing_paths = Column(JSON, nullable=True)
     validated_at = Column(DateTime, nullable=True)
 
     # Relationships

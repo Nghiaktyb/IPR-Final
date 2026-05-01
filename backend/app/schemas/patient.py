@@ -11,12 +11,16 @@ class PatientCreate(BaseModel):
     full_name: str = Field(..., min_length=1, max_length=255)
     date_of_birth: date
     sex: PatientSex
+    blood_type: Optional[str] = None
+    medical_history: Optional[str] = None
 
 
 class PatientUpdate(BaseModel):
     full_name: Optional[str] = None
     date_of_birth: Optional[date] = None
     sex: Optional[PatientSex] = None
+    blood_type: Optional[str] = None
+    medical_history: Optional[str] = None
 
 
 class PatientResponse(BaseModel):
@@ -25,6 +29,8 @@ class PatientResponse(BaseModel):
     date_of_birth: date
     sex: PatientSex
     is_archived: bool
+    blood_type: Optional[str] = None
+    medical_history: Optional[str] = None
     created_by: str
     created_at: datetime
     case_count: int = 0

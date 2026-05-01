@@ -8,6 +8,7 @@ export default function UploadXrayPage() {
   const [patients, setPatients] = useState([]);
   const [patientId, setPatientId] = useState('');
   const [notes, setNotes] = useState('');
+  const [vitals, setVitals] = useState({ patient_weight: '', patient_height: '', blood_pressure: '', heart_rate: '', temperature: '', reason_for_visit: '' });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -43,7 +44,7 @@ export default function UploadXrayPage() {
     if (!patientId || !file) return alert('Select a patient and upload an image');
     setUploading(true);
     try {
-      const res = await api.createCase(patientId, file, notes);
+      const res = await api.createCase(patientId, file, notes, vitals);
       router.push(`/cases/${res.id}`);
     } catch (e) { alert(e.message); }
     finally { setUploading(false); }
@@ -87,9 +88,38 @@ export default function UploadXrayPage() {
                 {patients.map(p => <option key={p.id} value={p.id}>{p.full_name} ({p.sex}, DOB: {p.date_of_birth})</option>)}
               </select>
             </div>
+            <div className="input-group" style={{marginBottom:16}}>
+              <label>Reason for Visit</label>
+              <input className="input" placeholder="Routine checkup, cough, pain..." value={vitals.reason_for_visit} onChange={e => setVitals(v=>({...v, reason_for_visit: e.target.value}))} />
+            </div>
+            
+            <h4 style={{marginBottom:12, marginTop:24, color:'var(--text-secondary)'}}>Visit Vitals (Optional)</h4>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20}}>
+              <div className="input-group">
+                <label>Weight (kg)</label>
+                <input type="number" step="0.1" className="input" placeholder="e.g. 70.5" value={vitals.patient_weight} onChange={e => setVitals(v=>({...v, patient_weight: e.target.value}))} />
+              </div>
+              <div className="input-group">
+                <label>Height (cm)</label>
+                <input type="number" step="0.1" className="input" placeholder="e.g. 175" value={vitals.patient_height} onChange={e => setVitals(v=>({...v, patient_height: e.target.value}))} />
+              </div>
+              <div className="input-group">
+                <label>Blood Pressure</label>
+                <input className="input" placeholder="120/80" value={vitals.blood_pressure} onChange={e => setVitals(v=>({...v, blood_pressure: e.target.value}))} />
+              </div>
+              <div className="input-group">
+                <label>Heart Rate (bpm)</label>
+                <input type="number" className="input" placeholder="e.g. 72" value={vitals.heart_rate} onChange={e => setVitals(v=>({...v, heart_rate: e.target.value}))} />
+              </div>
+              <div className="input-group" style={{gridColumn: '1 / -1'}}>
+                <label>Temperature (°C)</label>
+                <input type="number" step="0.1" className="input" placeholder="e.g. 37.0" value={vitals.temperature} onChange={e => setVitals(v=>({...v, temperature: e.target.value}))} />
+              </div>
+            </div>
+
             <div className="input-group" style={{marginBottom:20}}>
               <label>Clinical Notes</label>
-              <textarea className="input textarea" placeholder="Symptoms, medical history, reason for exam..." value={notes} onChange={e => setNotes(e.target.value)} />
+              <textarea className="input textarea" placeholder="Symptoms, observations, context for AI..." value={notes} onChange={e => setNotes(e.target.value)} />
             </div>
             <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}} disabled={uploading || !file || !patientId}>
               {uploading ? 'Uploading & Analyzing...' : 'Upload & Analyze'}

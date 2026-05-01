@@ -154,11 +154,19 @@ class ApiClient {
     return this.request(`/api/cases/${id}`);
   }
 
-  async createCase(patientId, image, clinicalNotes) {
+  async createCase(patientId, image, clinicalNotes, vitals = {}) {
     const formData = new FormData();
     formData.append('patient_id', patientId);
     formData.append('image', image);
     if (clinicalNotes) formData.append('clinical_notes', clinicalNotes);
+    
+    // Append vitals
+    if (vitals.patient_weight) formData.append('patient_weight', vitals.patient_weight);
+    if (vitals.patient_height) formData.append('patient_height', vitals.patient_height);
+    if (vitals.blood_pressure) formData.append('blood_pressure', vitals.blood_pressure);
+    if (vitals.heart_rate) formData.append('heart_rate', vitals.heart_rate);
+    if (vitals.temperature) formData.append('temperature', vitals.temperature);
+    if (vitals.reason_for_visit) formData.append('reason_for_visit', vitals.reason_for_visit);
 
     return this.request('/api/cases/', {
       method: 'POST',

@@ -17,6 +17,7 @@ class FindingResponse(BaseModel):
     validation_status: ValidationStatus
     validated_by: Optional[str] = None
     doctor_notes: Optional[str] = None
+    rejection_drawing_paths: Optional[list] = None
     validated_at: Optional[datetime] = None
 
     class Config:
@@ -26,12 +27,19 @@ class FindingResponse(BaseModel):
 class FindingValidate(BaseModel):
     validation_status: ValidationStatus
     doctor_notes: Optional[str] = None
+    rejection_drawing_paths: Optional[list] = None
 
 
 # ─── Case ───────────────────────────────────────────────
 class CaseCreate(BaseModel):
     patient_id: str
     clinical_notes: Optional[str] = None
+    patient_weight: Optional[float] = None
+    patient_height: Optional[float] = None
+    blood_pressure: Optional[str] = None
+    heart_rate: Optional[int] = None
+    temperature: Optional[float] = None
+    reason_for_visit: Optional[str] = None
 
 
 class CaseResponse(BaseModel):
@@ -40,6 +48,12 @@ class CaseResponse(BaseModel):
     uploaded_by: str
     image_filename: str
     clinical_notes: Optional[str] = None
+    patient_weight: Optional[float] = None
+    patient_height: Optional[float] = None
+    blood_pressure: Optional[str] = None
+    heart_rate: Optional[int] = None
+    temperature: Optional[float] = None
+    reason_for_visit: Optional[str] = None
     status: CaseStatus
     sensitivity_threshold: float
     findings: list[FindingResponse] = []

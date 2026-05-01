@@ -9,7 +9,7 @@ export default function PatientsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ full_name: '', date_of_birth: '', sex: 'male' });
+  const [form, setForm] = useState({ full_name: '', date_of_birth: '', sex: 'male', blood_type: '', medical_history: '' });
   const [creating, setCreating] = useState(false);
 
   const loadPatients = async (q = '') => {
@@ -35,7 +35,7 @@ export default function PatientsPage() {
     try {
       await api.createPatient(form);
       setShowCreate(false);
-      setForm({ full_name: '', date_of_birth: '', sex: 'male' });
+      setForm({ full_name: '', date_of_birth: '', sex: 'male', blood_type: '', medical_history: '' });
       loadPatients(search);
     } catch (e) { alert(e.message); }
     finally { setCreating(false); }
@@ -75,13 +75,16 @@ export default function PatientsPage() {
             <tbody>
               {patients.map(p => (
                 <tr key={p.id}>
-                  <td style={{fontWeight:600}}>{p.full_name}</td>
+                  <td style={{fontWeight:600}}>
+                    <Link href={`/patients/${p.id}`} className="link">{p.full_name}</Link>
+                  </td>
                   <td>{p.date_of_birth ? new Date(p.date_of_birth + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</td>
                   <td><span className="badge badge-primary">{p.sex}</span></td>
                   <td>{p.case_count}</td>
                   <td>{new Date(p.created_at).toLocaleDateString()}</td>
                   <td>
                     <Link href={`/cases/new?patient=${p.id}`} className="btn btn-ghost btn-sm">Upload X-ray</Link>
+                    <Link href={`/patients/${p.id}`} className="btn btn-ghost btn-sm" style={{marginLeft: 8}}>Profile</Link>
                   </td>
                 </tr>
               ))}
@@ -112,6 +115,24 @@ export default function PatientsPage() {
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                 </select>
+              </div>
+              <div className="input-group" style={{marginBottom:14}}>
+                <label>Blood Type (Optional)</label>
+                <select className="input select" value={form.blood_type} onChange={e => setForm(f=>({...f, blood_type: e.target.value}))}>
+                  <option value="">Unknown</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+              <div className="input-group" style={{marginBottom:14}}>
+                <label>Medical History</label>
+                <textarea className="input" placeholder="Allergies, chronic conditions..." value={form.medical_history} onChange={e => setForm(f=>({...f, medical_history: e.target.value}))} style={{minHeight: 60}} />
               </div>
               <div className="modal-footer">
                 <button type="button" onClick={() => setShowCreate(false)} className="btn btn-secondary">Cancel</button>
