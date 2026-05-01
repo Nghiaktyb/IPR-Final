@@ -54,7 +54,9 @@
 }
 
 .metaChip .chipIcon {
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .headerActions {
@@ -87,7 +89,6 @@
 .imageToolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border-light);
   background: var(--bg-primary);
@@ -95,16 +96,22 @@
 
 .toolbarTabs {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   background: var(--border-light);
   border-radius: 8px;
-  padding: 3px;
+  padding: 4px;
+  width: 100%;
 }
 
 .tabBtn {
-  padding: 6px 16px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  padding: 8px 12px;
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
   background: transparent;
@@ -196,7 +203,9 @@
 }
 
 .noImageIcon {
-  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0.3;
 }
 
@@ -264,10 +273,15 @@
 }
 
 .insightsIcon {
-  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .flagCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.72rem;
   font-weight: 700;
   padding: 3px 10px;
@@ -303,7 +317,9 @@
 }
 
 .thresholdLabel .tIcon {
-  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .thresholdControl input[type="range"] {
@@ -531,7 +547,9 @@
 }
 
 .clinicalNotesTitle .cnIcon {
-  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .clinicalNotes p {
@@ -548,7 +566,9 @@
 }
 
 .emptyFindings .emptyIcon {
-  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 10px;
   opacity: 0.4;
 }

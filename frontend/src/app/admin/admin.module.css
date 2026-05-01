@@ -15,7 +15,7 @@
   border-radius: 14px; padding: 22px;
 }
 .statValue { font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-.statLabel { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+.statLabel { font-size: 0.85rem; color: var(--text-muted); }
 
 .section { margin-bottom: 32px; }
 .section h2 { margin-bottom: 16px; font-size: 1.2rem; }
@@ -30,9 +30,9 @@
 .perfCard h4 { margin-bottom: 12px; font-size: 0.95rem; }
 .perfStats { display: flex; gap: 16px; margin-bottom: 10px; }
 .perfNum { display: block; font-size: 1.2rem; font-weight: 800; }
-.perfLabel { font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+.perfLabel { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
 .perfBar {
-  height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;
+  height: 6px; background: rgba(0,0,0,0.08); border-radius: 4px; overflow: hidden;
 }
 
 .navCards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -47,7 +47,7 @@
   box-shadow: 0 4px 20px rgba(26,115,232,0.15);
 }
 .navCard h3 { margin: 10px 0 6px; }
-.navCard p { font-size: 0.85rem; color: rgba(255,255,255,0.4); }
+.navCard p { font-size: 0.85rem; color: var(--text-muted); }
 .navIcon {
   display: inline-flex; width: 44px; height: 44px;
   border-radius: 12px; align-items: center; justify-content: center;

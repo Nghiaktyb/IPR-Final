@@ -39,11 +39,11 @@
   --text-muted: #9aa0a6;
   --text-inverse: #ffffff;
 
-  /* Admin Dark Theme */
-  --admin-bg: #0a0f1a;
-  --admin-card: #111827;
-  --admin-border: #1f2937;
-  --admin-text: #e5e7eb;
+  /* Admin Soft Theme */
+  --admin-bg: #f8fafc;
+  --admin-card: #ffffff;
+  --admin-border: #e2e8f0;
+  --admin-text: #334155;
 
   /* Spacing */
   --space-xs: 4px;
@@ -289,7 +289,7 @@ h4 { font-size: 1rem;    font-weight: 600; }
 }
 .table th {
   padding: 12px 16px;
-  text-align: left;
+  text-align: center;
   font-weight: 600;
   font-size: 0.8rem;
   color: var(--text-secondary);
@@ -302,6 +302,7 @@ h4 { font-size: 1rem;    font-weight: 600; }
   padding: 14px 16px;
   border-bottom: 1px solid var(--border-light);
   font-size: 0.9rem;
+  text-align: center;
 }
 .table tr:last-child td { border-bottom: none; }
 .table tr:hover td { background: var(--bg-primary); }
@@ -360,6 +361,9 @@ h4 { font-size: 1rem;    font-weight: 600; }
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 0.8s ease-in-out infinite;
 }
 
 .loading-center {

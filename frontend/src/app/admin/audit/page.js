@@ -35,7 +35,7 @@ export default function AuditPage() {
       <div className={styles.header}>
         <div className={styles.headerBadge}>COMMAND CENTER</div>
         <h1>Security & Audit Trail</h1>
-        <p style={{color:'rgba(255,255,255,0.4)', marginTop:4}}>Showing {logs.length} of {total} entries</p>
+        <p style={{color:'var(--text-muted)', marginTop:4}}>Showing {logs.length} of {total} entries</p>
       </div>
 
       <div style={{marginBottom:16, display:'flex', gap:8}}>
@@ -59,7 +59,7 @@ export default function AuditPage() {
                   <td style={{fontWeight:600}}>{l.user_name || l.user_id?.slice(0,8)}</td>
                   <td><span className={`badge ${actionColor(l.action)}`}>{l.action}</span></td>
                   <td style={{fontSize:'0.82rem'}}>{l.resource_type ? `${l.resource_type} #${l.resource_id?.slice(0,8) || ''}` : '-'}</td>
-                  <td style={{fontSize:'0.82rem', color:'rgba(255,255,255,0.4)'}}>{l.ip_address || '-'}</td>
+                  <td style={{fontSize:'0.82rem', color:'var(--text-muted)'}}>{l.ip_address || '-'}</td>
                 </tr>
               ))}
             </tbody>

@@ -81,9 +81,12 @@
 .active .linkIcon { transform: scale(1.1); }
 
 .linkIcon {
-  font-size: 1.15rem;
   width: 24px;
-  text-align: center;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   transition: transform 0.15s ease;
 }
 

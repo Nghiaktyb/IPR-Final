@@ -3,6 +3,31 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import styles from './viewer.module.css';
+import {
+  ClipboardList,
+  User,
+  Stethoscope,
+  CalendarDays,
+  RefreshCw,
+  FileText,
+  Image,
+  Brain,
+  AlertTriangle,
+  Crosshair,
+  Search,
+  Check,
+  X,
+  Flame,
+  PenLine,
+  Download,
+  Loader,
+  Wind,
+  Droplets,
+  Bug,
+  Circle,
+  PlusCircle,
+  Microscope,
+} from 'lucide-react';
 
 export default function DiagnosticViewer() {
   const { id } = useParams();
@@ -87,10 +112,14 @@ export default function DiagnosticViewer() {
 
   const getDiseaseIcon = (disease) => {
     const icons = {
-      'Atelectasis': '🫁', 'Effusion': '💧', 'Pneumonia': '🦠',
-      'Nodule': '⚬', 'Mass': '⊕',
+      'Atelectasis': Wind,
+      'Effusion': Droplets,
+      'Pneumonia': Bug,
+      'Nodule': Circle,
+      'Mass': PlusCircle,
     };
-    return icons[disease] || '🔬';
+    const IconComp = icons[disease] || Microscope;
+    return <IconComp size={16} />;
   };
 
   const statusConfig = {
@@ -113,11 +142,11 @@ export default function DiagnosticViewer() {
           <h2>Diagnostic Viewer</h2>
           <div className={styles.headerMeta}>
             <span className={styles.metaChip}>
-              <span className={styles.chipIcon}>📋</span>
+              <span className={styles.chipIcon}><ClipboardList size={14} /></span>
               Case #{id.slice(0,8)}
             </span>
             <span className={styles.metaChip}>
-              <span className={styles.chipIcon}>👤</span>
+              <span className={styles.chipIcon}><User size={14} /></span>
               {caseData.patient_name || 'Unknown'}
             </span>
             <span className={`badge ${st.class}`}>
@@ -125,22 +154,22 @@ export default function DiagnosticViewer() {
             </span>
             {caseData.uploaded_by_name && (
               <span className={styles.metaChip}>
-                <span className={styles.chipIcon}>🩺</span>
+                <span className={styles.chipIcon}><Stethoscope size={14} /></span>
                 Dr. {caseData.uploaded_by_name}
               </span>
             )}
             <span className={styles.metaChip}>
-              <span className={styles.chipIcon}>📅</span>
+              <span className={styles.chipIcon}><CalendarDays size={14} /></span>
               {new Date(caseData.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
             </span>
           </div>
         </div>
         <div className={styles.headerActions}>
           <button onClick={handleRerun} className="btn btn-secondary btn-sm">
-            🔄 Re-analyze
+            <RefreshCw size={14} /> Re-analyze
           </button>
           <button onClick={() => setShowReport(true)} className="btn btn-primary">
-            📄 Generate Report
+            <FileText size={14} /> Generate Report
           </button>
         </div>
       </div>
@@ -157,7 +186,7 @@ export default function DiagnosticViewer() {
                 className={`${styles.tabBtn} ${!activeHeatmap ? styles.tabBtnActive : ''}`}
                 onClick={() => { setActiveHeatmap(null); setImgError(false); }}
               >
-                🖼 Original
+                <Image size={14} /> Original
               </button>
               {findings.map(f => (
                 <button
@@ -172,18 +201,13 @@ export default function DiagnosticViewer() {
                 </button>
               ))}
             </div>
-            <div className={styles.toolbarInfo}>
-              {caseData.image_filename && (
-                <span>{caseData.image_filename}</span>
-              )}
-            </div>
           </div>
 
           {/* Image display */}
           <div className={styles.imageContainer}>
             {imgError ? (
               <div className={styles.noImageMsg}>
-                <span className={styles.noImageIcon}>🖼️</span>
+                <span className={styles.noImageIcon}><Image size={40} /></span>
                 <span>{activeHeatmap ? `Heatmap not available for ${activeHeatmap}` : 'Image not available'}</span>
               </div>
             ) : (
@@ -223,12 +247,12 @@ export default function DiagnosticViewer() {
           {/* Header */}
           <div className={styles.insightsHeader}>
             <div className={styles.insightsTitle}>
-              <span className={styles.insightsIcon}>🧠</span>
+              <span className={styles.insightsIcon}><Brain size={20} /></span>
               <h3>AI Diagnostic Insights</h3>
             </div>
             {flagged.length > 0 && (
               <span className={styles.flagCount}>
-                ⚠ {flagged.length} Flagged
+                <AlertTriangle size={14} /> {flagged.length} Flagged
               </span>
             )}
           </div>
@@ -236,7 +260,7 @@ export default function DiagnosticViewer() {
           {/* Sensitivity threshold */}
           <div className={styles.thresholdControl}>
             <span className={styles.thresholdLabel}>
-              <span className={styles.tIcon}>🎯</span> Sensitivity
+              <span className={styles.tIcon}><Crosshair size={14} /></span> Sensitivity
             </span>
             <input
               type="range" min="0.1" max="0.9" step="0.05"
@@ -249,7 +273,7 @@ export default function DiagnosticViewer() {
           {/* Findings list */}
           {findings.length === 0 ? (
             <div className={styles.emptyFindings}>
-              <div className={styles.emptyIcon}>🔍</div>
+              <div className={styles.emptyIcon}><Search size={40} /></div>
               <p>No findings available. Upload an X-ray to get AI analysis.</p>
             </div>
           ) : (
@@ -309,16 +333,16 @@ export default function DiagnosticViewer() {
                             className="btn btn-success btn-sm"
                             disabled={validating[f.id]}
                             onClick={() => handleValidate(f.id, 'accepted')}
-                          >✓ Accept</button>
+                          ><Check size={14} /> Accept</button>
                           <button
                             className="btn btn-danger btn-sm"
                             disabled={validating[f.id]}
                             onClick={() => handleValidate(f.id, 'rejected')}
-                          >✕ Reject</button>
+                          ><X size={14} /> Reject</button>
                         </>
                       ) : (
                         <span className={`badge ${f.validation_status === 'accepted' ? 'badge-success' : 'badge-danger'}`}>
-                          {f.validation_status === 'accepted' ? '✓ Accepted' : '✕ Rejected'}
+                          {f.validation_status === 'accepted' ? <><Check size={12} /> Accepted</> : <><X size={12} /> Rejected</>}
                         </span>
                       )}
                       <button
@@ -343,7 +367,7 @@ export default function DiagnosticViewer() {
                           transition: 'all 0.2s ease',
                         }}
                       >
-                        🔥 {activeHeatmap === f.disease_name ? 'Hide' : 'View'} Heatmap
+                        <Flame size={14} /> {activeHeatmap === f.disease_name ? 'Hide' : 'View'} Heatmap
                       </button>
                     </div>
 
@@ -365,7 +389,7 @@ export default function DiagnosticViewer() {
           {caseData.clinical_notes && (
             <div className={styles.clinicalNotes}>
               <div className={styles.clinicalNotesTitle}>
-                <span className={styles.cnIcon}>📝</span>
+                <span className={styles.cnIcon}><PenLine size={16} /></span>
                 Clinical Notes
               </div>
               <p>{caseData.clinical_notes}</p>
@@ -379,8 +403,8 @@ export default function DiagnosticViewer() {
         <div className="modal-overlay" onClick={() => setShowReport(false)}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth:550}}>
             <div className="modal-header">
-              <h3>📄 Generate Diagnostic Report</h3>
-              <button onClick={() => setShowReport(false)} className="btn btn-ghost btn-icon">✕</button>
+              <h3><FileText size={18} style={{verticalAlign: 'middle', marginRight: 6}} />Generate Diagnostic Report</h3>
+              <button onClick={() => setShowReport(false)} className="btn btn-ghost btn-icon"><X size={18} /></button>
             </div>
             <div className="input-group" style={{marginBottom:16}}>
               <label>Clinical Conclusion</label>
@@ -395,7 +419,7 @@ export default function DiagnosticViewer() {
             <div className="modal-footer">
               <button onClick={() => setShowReport(false)} className="btn btn-secondary">Cancel</button>
               <button onClick={handleReport} className="btn btn-primary" disabled={generating}>
-                {generating ? '⏳ Generating PDF...' : '📥 Generate & Download'}
+                {generating ? <><Loader size={14} className="spin" /> Generating PDF...</> : <><Download size={14} /> Generate &amp; Download</>}
               </button>
             </div>
           </div>

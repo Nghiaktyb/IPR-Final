@@ -52,19 +52,19 @@ export default function AIPerformancePage() {
             <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12, marginBottom:16}}>
               <div>
                 <div style={{fontSize:'1.5rem', fontWeight:800, color:'#0d904f'}}>{d.accepted}</div>
-                <div style={{fontSize:'0.75rem', color:'rgba(255,255,255,0.4)'}}>ACCEPTED</div>
+                <div style={{fontSize:'0.75rem', color:'var(--text-muted)'}}>ACCEPTED</div>
               </div>
               <div>
                 <div style={{fontSize:'1.5rem', fontWeight:800, color:'#d93025'}}>{d.rejected}</div>
-                <div style={{fontSize:'0.75rem', color:'rgba(255,255,255,0.4)'}}>REJECTED</div>
+                <div style={{fontSize:'0.75rem', color:'var(--text-muted)'}}>REJECTED</div>
               </div>
               <div>
                 <div style={{fontSize:'1.5rem', fontWeight:800, color:'#f9a825'}}>{d.edited}</div>
-                <div style={{fontSize:'0.75rem', color:'rgba(255,255,255,0.4)'}}>EDITED</div>
+                <div style={{fontSize:'0.75rem', color:'var(--text-muted)'}}>EDITED</div>
               </div>
               <div>
                 <div style={{fontSize:'1.5rem', fontWeight:800, color:'#1a73e8'}}>{d.pending}</div>
-                <div style={{fontSize:'0.75rem', color:'rgba(255,255,255,0.4)'}}>PENDING</div>
+                <div style={{fontSize:'0.75rem', color:'var(--text-muted)'}}>PENDING</div>
               </div>
             </div>
             <div style={{marginBottom:8, fontSize:'0.85rem', display:'flex', justifyContent:'space-between'}}>
@@ -73,7 +73,7 @@ export default function AIPerformancePage() {
                 {(d.accept_rate * 100).toFixed(0)}%
               </span>
             </div>
-            <div style={{height:8, background:'rgba(255,255,255,0.08)', borderRadius:4, overflow:'hidden'}}>
+            <div style={{height:8, background:'rgba(0,0,0,0.08)', borderRadius:4, overflow:'hidden'}}>
               <div style={{height:'100%', width:`${d.accept_rate * 100}%`, background: d.accept_rate >= 0.7 ? '#0d904f' : d.accept_rate >= 0.4 ? '#f9a825' : '#d93025', borderRadius:4, transition:'width 0.6s ease'}}></div>
             </div>
           </div>
