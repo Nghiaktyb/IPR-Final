@@ -227,8 +227,11 @@ def generate_pdf_report(
     findings_header = ["Disease", "Confidence", "Status", "Flagged"]
     findings_data = [findings_header]
     for f in findings:
-        status_text = f.get("validation_status", "pending").upper()
-        flagged_text = "⚠️ YES" if f.get("is_flagged") == "true" else "—"
+        status = str(f.get("validation_status", "pending")).lower()
+        is_flagged = f.get("is_flagged") is True or str(f.get("is_flagged")).lower() == "true"
+        
+        status_text = status.upper()
+        flagged_text = "⚠️ YES" if is_flagged else "—"
         confidence_pct = f"{f.get('confidence_score', 0):.1%}"
         findings_data.append([
             f.get("disease_name", ""),
@@ -256,8 +259,12 @@ def generate_pdf_report(
     elements.append(Paragraph("Detailed Findings & Annotations", section_style))
     
     for f in findings:
+        status = str(f.get("validation_status", "pending")).lower()
+        is_flagged = f.get("is_flagged") is True or str(f.get("is_flagged")).lower() == "true"
+        is_relevant = is_flagged or status == "accepted"
+
         finding_elements = []
-        finding_elements.append(Paragraph(f"<b>{f.get('disease_name')}</b> — {f.get('validation_status', 'pending').upper()}", section_style))
+        finding_elements.append(Paragraph(f"<b>{f.get('disease_name')}</b> — {status.upper()}", section_style))
         if f.get("doctor_notes"):
             finding_elements.append(Paragraph(f"<b>Clinical Note:</b> {f['doctor_notes']}", body_style))
             
@@ -265,7 +272,7 @@ def generate_pdf_report(
         heatmap_path = f.get("heatmap_path")
         
         img_added = False
-        if drawing_paths and image_path and os.path.exists(image_path):
+        if drawing_paths and image_path:
             annotated_path = os.path.join(output_dir, f"annotated_{case_data['id'][:8]}_{f['disease_name']}.jpg")
             if _create_annotated_image(image_path, drawing_paths, annotated_path):
                 img_flowable = _get_scaled_image(annotated_path, 140 * mm)
@@ -273,7 +280,7 @@ def generate_pdf_report(
                     finding_elements.append(img_flowable)
                     img_added = True
                     
-        if not img_added and (f.get("is_flagged") == "true" or f.get("validation_status") == "accepted") and heatmap_path:
+        if not img_added and is_relevant and heatmap_path:
             resolved_heatmap = _resolve_path(heatmap_path, settings.HEATMAP_DIR)
             if resolved_heatmap:
                 img_flowable = _get_scaled_image(resolved_heatmap, 140 * mm)
@@ -284,7 +291,7 @@ def generate_pdf_report(
 
         # Fallback: If it's a flagged/accepted finding but NO image was added yet (e.g. simulation mode),
         # show the original image so the report isn't empty.
-        if not img_added and (f.get("is_flagged") == "true" or f.get("validation_status") == "accepted") and image_path:
+        if not img_added and is_relevant and image_path:
             img_flowable = _get_scaled_image(image_path, 140 * mm)
             if img_flowable:
                 finding_elements.append(img_flowable)
