@@ -35,24 +35,33 @@ def _create_annotated_image(img_path: str, drawing_paths: list, out_path: str) -
         print(f"Error annotating image: {e}")
         return False
 
-def _resolve_path(path: str, fallback_dir: str) -> str:
-    """If absolute path fails, try to find the filename in the current fallback directory."""
+def _resolve_path(path: str, disease_name: str = None) -> str:
+    """
+    Tries to find a valid absolute path for an image.
+    Checks absolute path, then searches in uploads/, heatmaps/, and reports/.
+    """
     if not path:
         return None
+        
+    # 1. Try absolute/direct path
     if os.path.exists(path):
         return path
     
-    # Try local resolution
+    # 2. Try to find the filename in our known storage directories
     filename = os.path.basename(path)
-    local_path = os.path.join(fallback_dir, filename)
-    if os.path.exists(local_path):
-        return local_path
-        
+    search_dirs = [settings.UPLOAD_DIR, settings.HEATMAP_DIR, settings.REPORT_DIR]
+    
+    for s_dir in search_dirs:
+        local_path = os.path.join(s_dir, filename)
+        if os.path.exists(local_path):
+            return local_path
+            
+    print(f"[REPORT ERROR] Could not resolve image path: {path}")
     return None
 
 def _get_scaled_image(path: str, max_width: float):
-    path = _resolve_path(path, settings.UPLOAD_DIR) # General fallback
-    if not path:
+    """Loads and scales an image for ReportLab. Assumes path is already valid."""
+    if not path or not os.path.exists(path):
         return None
     try:
         with PILImage.open(path) as img:
@@ -61,7 +70,8 @@ def _get_scaled_image(path: str, max_width: float):
             draw_width = min(max_width, w)
             draw_height = draw_width * aspect
             return RLImage(path, width=draw_width, height=draw_height)
-    except:
+    except Exception as e:
+        print(f"[REPORT ERROR] PIL failed to open {path}: {e}")
         return None
 
 
@@ -203,7 +213,7 @@ def generate_pdf_report(
 
 
     # Original X-Ray
-    image_path = _resolve_path(case_data.get("image_path"), settings.UPLOAD_DIR)
+    image_path = _resolve_path(case_data.get("image_path"))
     if image_path:
         elements.append(Paragraph("Original Radiograph", section_style))
         img_flowable = _get_scaled_image(image_path, 150 * mm)
@@ -260,7 +270,9 @@ def generate_pdf_report(
     
     for f in findings:
         status = str(f.get("validation_status", "pending")).lower()
-        is_flagged = f.get("is_flagged") is True or str(f.get("is_flagged")).lower() == "true"
+        # Robust boolean check for "is_flagged"
+        raw_flag = f.get("is_flagged")
+        is_flagged = raw_flag is True or str(raw_flag).lower() in ["true", "1", "yes"]
         is_relevant = is_flagged or status == "accepted"
 
         finding_elements = []
@@ -281,7 +293,7 @@ def generate_pdf_report(
                     img_added = True
                     
         if not img_added and is_relevant and heatmap_path:
-            resolved_heatmap = _resolve_path(heatmap_path, settings.HEATMAP_DIR)
+            resolved_heatmap = _resolve_path(heatmap_path)
             if resolved_heatmap:
                 img_flowable = _get_scaled_image(resolved_heatmap, 140 * mm)
                 if img_flowable:
