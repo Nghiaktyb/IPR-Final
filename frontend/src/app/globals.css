@@ -188,6 +188,7 @@ h4 { font-size: 1rem;    font-weight: 600; }
 }
 .btn-primary:hover {
   background: var(--primary-hover);
+  color: white;
   box-shadow: 0 4px 16px rgba(26, 115, 232, 0.4);
   transform: translateY(-1px);
 }
@@ -206,13 +207,19 @@ h4 { font-size: 1rem;    font-weight: 600; }
   background: var(--danger);
   color: white;
 }
-.btn-danger:hover { background: #c62828; }
+.btn-danger:hover { 
+  background: #c62828; 
+  color: white;
+}
 
 .btn-success {
   background: var(--success);
   color: white;
 }
-.btn-success:hover { background: #0a7c43; }
+.btn-success:hover { 
+  background: #0a7c43; 
+  color: white;
+}
 
 .btn-ghost {
   background: transparent;

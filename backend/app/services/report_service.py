@@ -35,7 +35,25 @@ def _create_annotated_image(img_path: str, drawing_paths: list, out_path: str) -
         print(f"Error annotating image: {e}")
         return False
 
+def _resolve_path(path: str, fallback_dir: str) -> str:
+    """If absolute path fails, try to find the filename in the current fallback directory."""
+    if not path:
+        return None
+    if os.path.exists(path):
+        return path
+    
+    # Try local resolution
+    filename = os.path.basename(path)
+    local_path = os.path.join(fallback_dir, filename)
+    if os.path.exists(local_path):
+        return local_path
+        
+    return None
+
 def _get_scaled_image(path: str, max_width: float):
+    path = _resolve_path(path, settings.UPLOAD_DIR) # General fallback
+    if not path:
+        return None
     try:
         with PILImage.open(path) as img:
             w, h = img.size
@@ -185,8 +203,8 @@ def generate_pdf_report(
 
 
     # Original X-Ray
-    image_path = case_data.get("image_path")
-    if image_path and os.path.exists(image_path):
+    image_path = _resolve_path(case_data.get("image_path"), settings.UPLOAD_DIR)
+    if image_path:
         elements.append(Paragraph("Original Radiograph", section_style))
         img_flowable = _get_scaled_image(image_path, 150 * mm)
         if img_flowable:
@@ -255,10 +273,22 @@ def generate_pdf_report(
                     finding_elements.append(img_flowable)
                     img_added = True
                     
-        if not img_added and (f.get("is_flagged") == "true" or f.get("validation_status") == "accepted") and heatmap_path and os.path.exists(heatmap_path):
-            img_flowable = _get_scaled_image(heatmap_path, 140 * mm)
+        if not img_added and (f.get("is_flagged") == "true" or f.get("validation_status") == "accepted") and heatmap_path:
+            resolved_heatmap = _resolve_path(heatmap_path, settings.HEATMAP_DIR)
+            if resolved_heatmap:
+                img_flowable = _get_scaled_image(resolved_heatmap, 140 * mm)
+                if img_flowable:
+                    finding_elements.append(img_flowable)
+                    finding_elements.append(Paragraph("<font size=8 color=grey>(AI-Generated Heatmap Overlay)</font>", body_style))
+                    img_added = True
+
+        # Fallback: If it's a flagged/accepted finding but NO image was added yet (e.g. simulation mode),
+        # show the original image so the report isn't empty.
+        if not img_added and (f.get("is_flagged") == "true" or f.get("validation_status") == "accepted") and image_path:
+            img_flowable = _get_scaled_image(image_path, 140 * mm)
             if img_flowable:
                 finding_elements.append(img_flowable)
+                finding_elements.append(Paragraph("<font size=8 color=grey>(Original Radiograph — Region of Interest)</font>", body_style))
                 img_added = True
                 
         if img_added:
