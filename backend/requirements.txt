@@ -13,6 +13,8 @@ pydantic-settings>=2.3.0
 python-dotenv>=1.0.0
 aiofiles>=23.2.0
 opencv-python-headless>=4.9.0
+pymysql>=1.1.1
+cryptography>=42.0.0
 
 # AI Engine (optional — runs in simulation mode without these)
 # torch>=2.3.0

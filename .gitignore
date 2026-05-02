@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Next.js
+.next/
+out/
+build/
+
+# Node
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# MedicX Storage (Dynamic Content)
+backend/uploads/
+backend/heatmaps/
+backend/reports/
+backend/medix.db
+
+# Logs
+*.log

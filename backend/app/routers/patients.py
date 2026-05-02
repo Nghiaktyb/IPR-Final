@@ -27,9 +27,7 @@ def create_patient(
 ):
     """Create a new patient profile."""
     patient = Patient(
-        full_name=data.full_name,
-        date_of_birth=data.date_of_birth,
-        sex=data.sex,
+        **data.model_dump(),
         created_by=current_user.id,
     )
     db.add(patient)
@@ -162,6 +160,8 @@ def _patient_to_response(db: Session, patient: Patient) -> PatientResponse:
         date_of_birth=patient.date_of_birth,
         sex=patient.sex,
         is_archived=patient.is_archived,
+        blood_type=patient.blood_type,
+        medical_history=patient.medical_history,
         created_by=patient.created_by,
         created_at=patient.created_at,
         case_count=case_count or 0,
