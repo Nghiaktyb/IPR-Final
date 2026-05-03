@@ -252,51 +252,68 @@ def generate_pdf_report(
     
     for f in findings:
         status = str(f.get("validation_status", "pending")).lower()
-        # Robust boolean check for "is_flagged"
-        raw_flag = f.get("is_flagged")
-        is_flagged = raw_flag is True or str(raw_flag).lower() in ["true", "1", "yes"]
-        is_relevant = is_flagged or status == "accepted"
 
         finding_elements = []
         finding_elements.append(Paragraph(f"<b>{f.get('disease_name')}</b> — {status.upper()}", section_style))
         if f.get("doctor_notes"):
             finding_elements.append(Paragraph(f"<b>Clinical Note:</b> {f['doctor_notes']}", body_style))
-            
+
         drawing_paths = f.get("rejection_drawing_paths")
         heatmap_path = f.get("heatmap_path")
-        
+
+        # Every finding gets an image. Preference order:
+        #   1. Doctor-annotated drawing (if any)
+        #   2. AI-generated Grad-CAM heatmap overlay
+        #   3. Original radiograph as a last resort
+        # The image is always shown — independent of accept/reject/pending state —
+        # so the diagnostic section never ends up with a header but no picture.
         img_added = False
         if drawing_paths and image_path:
-            annotated_path = os.path.join(output_dir, f"annotated_{case_data['id'][:8]}_{f['disease_name']}.jpg")
+            annotated_path = os.path.join(
+                output_dir,
+                f"annotated_{case_data['id'][:8]}_{f['disease_name']}.jpg",
+            )
             if _create_annotated_image(image_path, drawing_paths, annotated_path):
                 img_flowable = _get_scaled_image(annotated_path, 140 * mm)
                 if img_flowable:
                     finding_elements.append(img_flowable)
+                    finding_elements.append(Paragraph(
+                        "<font size=8 color=grey>(Doctor-Annotated Radiograph)</font>",
+                        body_style,
+                    ))
                     img_added = True
-                    
-        if not img_added and is_relevant and heatmap_path:
+
+        if not img_added and heatmap_path:
             resolved_heatmap = _resolve_path(heatmap_path)
             if resolved_heatmap:
                 img_flowable = _get_scaled_image(resolved_heatmap, 140 * mm)
                 if img_flowable:
                     finding_elements.append(img_flowable)
-                    finding_elements.append(Paragraph("<font size=8 color=grey>(AI-Generated Heatmap Overlay)</font>", body_style))
+                    finding_elements.append(Paragraph(
+                        "<font size=8 color=grey>(AI-Generated Heatmap Overlay)</font>",
+                        body_style,
+                    ))
                     img_added = True
 
-        # Fallback: If it's a flagged/accepted finding but NO image was added yet (e.g. simulation mode),
-        # show the original image so the report isn't empty.
-        if not img_added and is_relevant and image_path:
+        if not img_added and image_path:
             img_flowable = _get_scaled_image(image_path, 140 * mm)
             if img_flowable:
                 finding_elements.append(img_flowable)
-                finding_elements.append(Paragraph("<font size=8 color=grey>(Original Radiograph — Region of Interest)</font>", body_style))
+                finding_elements.append(Paragraph(
+                    "<font size=8 color=grey>(Original Radiograph — Region of Interest)</font>",
+                    body_style,
+                ))
                 img_added = True
-                
+
         if img_added:
             finding_elements.append(Spacer(1, 8 * mm))
         else:
+            finding_elements.append(Paragraph(
+                "<font size=8 color=grey>(No image available for this finding.)</font>",
+                body_style,
+            ))
             finding_elements.append(Spacer(1, 4 * mm))
-            
+
         elements.append(KeepTogether(finding_elements))
 
     # Conclusion
