@@ -1,75 +1,54 @@
-# 🏥 MediX — AI Radiology Diagnostic Suite
+# MediX — AI Radiology Diagnostic Suite
 
-MediX is an AI-powered chest X-ray analysis platform for disease detection and medical diagnosis support. It combines a **FastAPI** backend with a **Next.js** frontend to provide doctors with real-time AI diagnostics, interactive annotation tools, and professional PDF report generation.
+MediX is an AI-powered chest X-ray analysis platform for disease detection and clinical decision support. It uses a **FastAPI** backend and a **Next.js** frontend for real-time AI diagnostics, annotation, and PDF reports.
 
-**Detected Conditions:** Atelectasis · Effusion · Pneumonia · Nodule · Mass
-
----
-
-## 📋 Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Clone the Repository](#1-clone-the-repository)
-3. [MySQL Database Setup](#2-mysql-database-setup)
-4. [Backend Setup (FastAPI)](#3-backend-setup-fastapi)
-5. [Frontend Setup (Next.js)](#4-frontend-setup-nextjs)
-6. [AI Model Setup (Optional)](#5-ai-model-setup-optional)
-7. [Running the Application](#6-running-the-application)
-8. [Creating Your First Account](#7-creating-your-first-account)
-9. [Project Structure](#project-structure)
-10. [Troubleshooting](#troubleshooting)
+**Detected conditions:** Atelectasis · Effusion · Pneumonia · Nodule · Mass
 
 ---
 
 ## Prerequisites
 
-Make sure the following are installed on your machine before starting:
+Install these **before** you start (any recent versions are fine):
 
-| Software   | Version  | Download Link                                     |
-| ---------- | -------- | ------------------------------------------------- |
-| **Python** | ≥ 3.10   | [python.org](https://www.python.org/downloads/)    |
-| **Node.js**| ≥ 18     | [nodejs.org](https://nodejs.org/)                  |
-| **MySQL**  | ≥ 8.0    | [mysql.com](https://dev.mysql.com/downloads/)      |
-| **Git**    | any      | [git-scm.com](https://git-scm.com/)               |
+| Software | Minimum | Notes |
+|----------|---------|--------|
+| **Python** | 3.10+ | [python.org](https://www.python.org/downloads/) |
+| **Node.js** | 18+ | [nodejs.org](https://nodejs.org/) |
+| **MySQL** | 8.0+ | [mysql.com](https://dev.mysql.com/downloads/) — required for the default setup |
+| **Git** | any | [git-scm.com](https://git-scm.com/) |
 
-> **Note:** If you do not install PyTorch (see Step 5), the AI engine will run in **simulation mode** — it will generate random confidence scores instead of real predictions. This is fine for UI development and testing.
+> **PyTorch** is optional. Without it, the AI runs in **simulation mode** (random scores) — enough to explore the UI. For real inference, heatmaps, and the **AI Training** admin page, install PyTorch later ([see below](#optional-ai-model--pytorch)).
 
 ---
 
-## 1. Clone the Repository
+## Step-by-step: set up on another machine
+
+Follow these steps **in order**. Use **two terminal windows** when you reach “run backend” and “run frontend”.
+
+### Step 1 — Clone the repository
 
 ```bash
 git clone https://github.com/Nghiaktyb/IPR-Final.git
-cd Medix
+cd IPR-Final
 ```
 
----
+If your folder name is different (e.g. you renamed it to `Medix`), `cd` into that folder instead.
 
-## 2. MySQL Database Setup
+### Step 2 — Create the MySQL database
 
-Open your MySQL client (MySQL Workbench, terminal, etc.) and create the database:
+Open MySQL (Workbench, command line, etc.) and run:
 
 ```sql
 CREATE DATABASE medix CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-> **Important:** Remember the MySQL **username** and **password** you use. You will need them in the next step.
+Create or choose a MySQL user that can connect to `localhost` and has rights on `medix`. You will put that user’s **username** and **password** into `backend/.env` in Step 4.
 
-The application will automatically create all required tables on first startup — no manual table creation needed.
-
----
-
-## 3. Backend Setup (FastAPI)
-
-### 3.1 Navigate to the backend directory
+### Step 3 — Python virtual environment and dependencies
 
 ```bash
 cd backend
-```
 
-### 3.2 Create a Python virtual environment
-
-```bash
 # Windows
 python -m venv venv
 venv\Scripts\activate
@@ -77,249 +56,218 @@ venv\Scripts\activate
 # macOS / Linux
 python3 -m venv venv
 source venv/bin/activate
-```
 
-### 3.3 Install Python dependencies
-
-```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-You also need the MySQL driver:
+Stay in `backend/` for the next steps while the venv is active.
+
+### Step 4 — Environment file (`.env`)
+
+**Do not commit your real `.env`.** Copy the template and edit it.
 
 ```bash
-pip install pymysql cryptography
-```
-
-### 3.4 Configure environment variables
-
-Copy the example environment file:
-
-```bash
-# Windows
+# Windows (in backend/)
 copy .env.example .env
 
 # macOS / Linux
 cp .env.example .env
 ```
 
-Open the `.env` file and update the **DATABASE_URL** with your MySQL credentials:
+Open `backend/.env` in an editor and set at least:
 
-```env
-# Replace <username> and <password> with your MySQL credentials
-DATABASE_URL=mysql+pymysql://<username>:<password>@localhost:3306/medix
-```
+1. **`DATABASE_URL`** — replace `USER` and `PASS` with your MySQL credentials:
 
-**Example** (with user `root` and password `MyPassword123`):
+   ```env
+   DATABASE_URL=mysql+pymysql://USER:PASS@localhost:3306/medix
+   ```
 
-```env
-DATABASE_URL=mysql+pymysql://root:MyPassword123@localhost:3306/medix
-```
+   Example:
 
-Also set a strong secret key for JWT authentication:
+   ```env
+   DATABASE_URL=mysql+pymysql://root:MySecurePassword@localhost:3306/medix
+   ```
 
-```env
-SECRET_KEY=your-own-strong-random-secret-key
-```
+2. **`SECRET_KEY`** — long random string for JWT signing (not the default in production).
 
-### 3.5 Test the backend starts correctly
+Optional:
+
+- **`MODEL_PATH`** — only if your `.pth` file is not at `backend/models/medix_model.pth`.
+- **`CORS_ORIGINS`** — JSON array; add your real frontend URL when you deploy (default includes `localhost:3000`).
+
+### Step 5 — Start the backend
+
+Still in `backend/` with the venv activated:
 
 ```bash
 python -m uvicorn app.main:app --reload
 ```
 
-You should see:
+You should see startup lines ending with something like:
 
-```
-[MedicX] Starting AI Radiology Diagnostic Suite
+```text
 [OK] Database tables initialized
 [OK] Server ready at http://localhost:8000
-[OK] API docs at http://localhost:8000/api/docs
 ```
 
-> ✅ Leave this terminal open and running. Open a **new terminal** for the frontend.
+Leave this terminal **open**.
 
----
+Quick check: open [http://localhost:8000/api/health](http://localhost:8000/api/health) — you should get a JSON `"status": "healthy"`.
 
-## 4. Frontend Setup (Next.js)
+### Step 6 — Install and run the frontend
 
-### 4.1 Open a new terminal and navigate to the frontend directory
+Open a **second** terminal:
 
 ```bash
 cd frontend
-```
-
-### 4.2 Install Node.js dependencies
-
-```bash
 npm install
-```
-
-### 4.3 Start the development server
-
-```bash
 npm run dev
 ```
 
-You should see:
+You should see Next.js listening on **http://localhost:3000**.
 
-```
-▲ Next.js 16.x.x
-- Local: http://localhost:3000
+**If the backend is not on `http://localhost:8000`** (different host/port), copy the template and set the API URL:
+
+```bash
+# Windows
+copy .env.example .env.local
+
+# macOS / Linux
+cp .env.example .env.local
 ```
 
-> ✅ The frontend will automatically connect to the backend at `http://localhost:8000`.
+Edit `frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://YOUR_BACKEND_HOST:PORT
+```
+
+Restart `npm run dev` after changing env vars.
+
+### Step 7 — Register the first user (Administrator)
+
+1. Open **http://localhost:3000**
+2. Click **Register**
+3. Enter name, email, password
+4. Under **Role**, choose **Administrator** (needed for Admin → Users, AI Training, Data Retention, Audit)
+5. Submit — you are logged in
+
+Other roles can be created later; an admin can change roles under **Admin → Users**.
+
+### Step 8 — Smoke test the app
+
+1. **Patients** → **+ New Patient** — enter a unique **Patient ID** (e.g. hospital MRN), name, DOB, etc.
+2. **Upload X-ray** for that patient — add an image; AI runs (real if PyTorch + model exist, else simulated)
+3. Open the case, review findings, then **Generate Report** if available
+
+### Step 9 — (Optional) Real AI: PyTorch + model
+
+See [Optional: AI model & PyTorch](#optional-ai-model--pytorch).
 
 ---
 
-## 5. AI Model Setup (Optional)
+## Optional: quick try with SQLite (no MySQL)
 
-By default, the AI engine runs in **simulation mode**. To enable real AI predictions:
+For a **local-only** trial you can use SQLite instead of MySQL. In `backend/.env` set:
 
-### 5.1 Install PyTorch
-
-```bash
-# CPU only
-pip install torch torchvision
-
-# With CUDA (NVIDIA GPU) — check https://pytorch.org for your version
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+```env
+DATABASE_URL=sqlite:///./medix.db
 ```
 
-### 5.2 Place the model file
+Then run Step 5 again. Tables are created automatically. **Use MySQL for anything closer to production** (training, multiple users, typical deployment).
 
-The application expects the trained model at the path configured in `backend/app/config.py` → `MODEL_PATH`.
+---
 
-Default path: `../../medix/medix/medix_model.pth` (relative to the backend directory).
+## Optional: AI model & PyTorch
 
-You can override this by setting `MODEL_PATH` in your `.env` file:
+The backend looks for weights at **`backend/models/medix_model.pth`** by default (folder is created on startup). If the file is missing, inference falls back to **simulation**.
+
+### Install PyTorch (same venv as the backend)
+
+```bash
+cd backend
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # macOS / Linux
+
+pip install torch torchvision
+# NVIDIA GPU: see https://pytorch.org for the correct `--index-url` for your CUDA version
+```
+
+### Get a checkpoint
+
+- **Copy** a trained `.pth` into `backend/models/medix_model.pth`, or  
+- **Train** in the UI: **Admin → AI Training** → upload dataset → run training → **Promote** (writes to `models/medix_model.pth`).
+
+Override path in `.env` if needed:
 
 ```env
 MODEL_PATH=C:/path/to/your/medix_model.pth
 ```
 
----
-
-## 6. Running the Application
-
-You need **two terminals** running simultaneously:
-
-### Terminal 1 — Backend
-
-```bash
-cd backend
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # macOS/Linux
-python -m uvicorn app.main:app --reload
-```
-
-### Terminal 2 — Frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
-### Access the application
-
-| URL                              | Description          |
-| -------------------------------- | -------------------- |
-| `http://localhost:3000`          | Main application UI  |
-| `http://localhost:8000/api/docs` | API documentation    |
-| `http://localhost:8000/api/health` | Health check       |
+Checkpoints, uploads, heatmaps, and reports are **not** in git — they exist only on each machine.
 
 ---
 
-## 7. Creating Your First Account
+## Daily use: two terminals
 
-1. Open `http://localhost:3000` in your browser.
-2. Click **Register** to create a new doctor account.
-3. Fill in your name, email, and password.
-4. After registration, you will be logged in automatically.
+| Terminal | Directory | Command |
+|----------|-----------|---------|
+| 1 | `backend/` | `venv\Scripts\activate` then `python -m uvicorn app.main:app --reload` |
+| 2 | `frontend/` | `npm run dev` |
 
-### Quick workflow
+URLs:
 
-1. **Create a Patient** — Go to "Patients" → Click "+ New Patient" → Enter name, DOB, sex, blood type, and medical history.
-2. **Upload an X-ray** — Click "Upload X-ray" for a patient → Fill in visit vitals (weight, height, BP, etc.) → Drop an image.
-3. **Review AI Results** — The AI will automatically analyze the X-ray. Review flagged conditions and validate or reject each finding.
-4. **Generate Report** — Click "Generate Report" to create a professional PDF with all patient details, vitals, and AI analysis.
+| URL | Purpose |
+|-----|---------|
+| http://localhost:3000 | Web app |
+| http://localhost:8000/api/docs | API docs |
+| http://localhost:8000/api/health | Health check |
 
 ---
 
-## Project Structure
+## Project structure (abbreviated)
 
-```
+```text
 Medix/
 ├── backend/
-│   ├── app/
-│   │   ├── config.py          # Application settings & env loading
-│   │   ├── database.py        # SQLAlchemy engine & session
-│   │   ├── main.py            # FastAPI app entry point
-│   │   ├── middleware/        # JWT auth & logging middleware
-│   │   ├── models/            # SQLAlchemy ORM models
-│   │   │   ├── case.py        # Case & Finding models
-│   │   │   ├── patient.py     # Patient model
-│   │   │   ├── report.py      # Report model
-│   │   │   └── user.py        # User model
-│   │   ├── routers/           # API route handlers
-│   │   │   ├── auth.py        # Login / Register
-│   │   │   ├── cases.py       # X-ray upload & AI analysis
-│   │   │   ├── patients.py    # Patient CRUD
-│   │   │   ├── reports.py     # PDF report generation
-│   │   │   └── admin.py       # Admin panel
-│   │   ├── schemas/           # Pydantic request/response models
-│   │   └── services/          # Business logic
-│   │       ├── ai_service.py       # PyTorch model wrapper
-│   │       ├── gradcam_service.py  # Heatmap generation
-│   │       └── report_service.py   # PDF report builder
-│   ├── .env.example           # Environment template
-│   ├── requirements.txt       # Python dependencies
-│   ├── uploads/               # Uploaded X-ray images
-│   ├── heatmaps/              # AI-generated Grad-CAM heatmaps
-│   └── reports/               # Generated PDF reports
-│
+│   ├── app/                  # FastAPI app (routers, models, services)
+│   ├── .env.example          # Copy → .env (never commit .env)
+│   ├── requirements.txt
+│   ├── models/               # medix_model.pth (gitignored)
+│   ├── uploads/              # X-rays (gitignored)
+│   ├── heatmaps/             # Grad-CAM (gitignored)
+│   └── reports/              # PDFs (gitignored)
 └── frontend/
+    ├── .env.example          # Optional → .env.local for API URL
     ├── src/
-    │   ├── app/
-    │   │   ├── auth/          # Login & Register pages
-    │   │   ├── cases/
-    │   │   │   ├── new/       # Upload X-ray page
-    │   │   │   └── [id]/      # Diagnostic Viewer
-    │   │   ├── patients/
-    │   │   │   ├── page.js    # Patient Directory
-    │   │   │   └── [id]/      # Patient Profile & History
-    │   │   └── layout.js      # Root layout with sidebar
-    │   ├── components/        # Shared UI components
-    │   └── lib/
-    │       └── api.js         # API client
+    │   ├── app/              # Next.js routes
+    │   └── lib/api.js        # API client
     └── package.json
 ```
 
 ---
 
+## Security notice (older clones)
+
+If an old revision committed `backend/.env` or tracked `__pycache__`, `.pyc`, or demo `uploads/` / `heatmaps/` / `reports/`, those paths are now untracked and listed in `.gitignore`. **Passwords that were ever committed may still exist in git history** — rotate those MySQL credentials. Recreate `backend/.env` from `.env.example` and delete local `__pycache__` folders if you see odd import errors.
+
+---
+
 ## Troubleshooting
 
-### ❌ `NameError: name 'Text' is not defined`
-Make sure all SQLAlchemy model files import the correct column types. Check the import line in the affected model file.
-
-### ❌ `ModuleNotFoundError: No module named 'app'`
-You must run the backend from inside the `backend/` directory:
-```bash
-cd backend
-python -m uvicorn app.main:app --reload
-```
-
-### ❌ `Access denied for user` (MySQL)
-Double-check the username and password in your `backend/.env` file match your MySQL credentials.
-
-### ❌ `Failed to fetch` (Frontend)
-Ensure the backend is running on `http://localhost:8000` before using the frontend. Check that CORS is configured correctly in `.env`.
-
-### ❌ AI is in "Simulation Mode"
-This is normal if PyTorch is not installed. Install `torch` and `torchvision` and place the model file to enable real predictions. See [Step 5](#5-ai-model-setup-optional).
+| Symptom | What to check |
+|---------|----------------|
+| `ModuleNotFoundError: No module named 'app'` | Run uvicorn **from** `backend/`: `python -m uvicorn app.main:app --reload` |
+| MySQL `Access denied` | `DATABASE_URL` user, password, host, database name |
+| Frontend `Failed to fetch` | Backend running on port 8000; `CORS_ORIGINS` includes your frontend origin |
+| Admin pages missing | First user registered as **Administrator**, or promoted under Admin → Users |
+| Simulation mode / no real AI | Install `torch` + `torchvision`; place or train `medix_model.pth` |
+| Training says PyTorch missing | Install PyTorch in the **same** venv as the backend, restart uvicorn |
+| Wrong API host from frontend | Set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` and restart `npm run dev` |
 
 ---
 
 ## License
 
-This project is part of an academic/research initiative. See LICENSE file for details.
+Academic/research use — see LICENSE if present in the repository.

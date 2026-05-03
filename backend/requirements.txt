@@ -17,5 +17,6 @@ pymysql>=1.1.1
 cryptography>=42.0.0
 
 # AI Engine (optional — runs in simulation mode without these)
+# Required for both inference (Grad-CAM) AND admin-side fine-tuning training:
 # torch>=2.3.0
 # torchvision>=0.18.0

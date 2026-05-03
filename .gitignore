@@ -1,32 +1,51 @@
-# Byte-compiled / optimized / DLL files
+# ─── Python ───────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 
-# Environments
+# ─── Virtual environments ────────────────────────────
 .venv/
 venv/
 ENV/
 env/
-.env
 
-# Next.js
+# ─── Secrets ─────────────────────────────────────────
+# NEVER commit real .env files — they hold DB passwords / JWT keys.
+.env
+.env.local
+.env.production
+backend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ─── Next.js / Node ──────────────────────────────────
 .next/
 out/
 build/
-
-# Node
 node_modules/
 
-# OS files
+# ─── OS files ────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# MedicX Storage (Dynamic Content)
+# ─── MedicX dynamic storage (per-machine) ────────────
 backend/uploads/
 backend/heatmaps/
 backend/reports/
+backend/training_data/
+backend/training_runs/
+backend/models/
 backend/medix.db
+backend/medix.db-journal
+backend/*.sqlite
+backend/*.sqlite3
 
-# Logs
+# ─── ML / model checkpoints ──────────────────────────
+*.pth
+*.pt
+*.ckpt
+*.onnx
+
+# ─── Logs ────────────────────────────────────────────
 *.log

@@ -18,6 +18,11 @@ class Patient(Base):
     __tablename__ = "patients"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    # Human-readable identifier supplied by the clinician at registration
+    # time (e.g. hospital MRN). Unique across the database so duplicate
+    # creates are rejected. Nullable so legacy rows that pre-date this
+    # column don't have to be backfilled.
+    patient_code = Column(String(50), nullable=True, unique=True, index=True)
     full_name = Column(String(255), nullable=False, index=True)
     date_of_birth = Column(Date, nullable=False)
     sex = Column(SAEnum(PatientSex), nullable=False)

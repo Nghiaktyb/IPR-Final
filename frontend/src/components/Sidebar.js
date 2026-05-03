@@ -11,6 +11,8 @@ import {
   KeyRound,
   ClipboardList,
   Bot,
+  Brain,
+  Trash2,
   LogOut,
 } from 'lucide-react';
 
@@ -25,6 +27,8 @@ const adminLinks = [
   { href: '/admin/users', label: 'Users', icon: KeyRound },
   { href: '/admin/audit', label: 'Audit Trail', icon: ClipboardList },
   { href: '/admin/ai-performance', label: 'AI Performance', icon: Bot },
+  { href: '/admin/training', label: 'AI Training', icon: Brain },
+  { href: '/admin/retention', label: 'Data Retention', icon: Trash2 },
 ];
 
 export default function Sidebar() {

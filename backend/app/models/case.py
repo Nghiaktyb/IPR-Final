@@ -54,7 +54,16 @@ class Case(Base):
     patient = relationship("Patient", back_populates="cases")
     uploaded_by_user = relationship("User", back_populates="cases", foreign_keys=[uploaded_by])
     findings = relationship("Finding", back_populates="case", cascade="all, delete-orphan")
-    report = relationship("Report", back_populates="case", uselist=False)
+    # Cascade so deleting a Case wipes its Report too — without this,
+    # SQLAlchemy tries to UPDATE reports.case_id = NULL, which violates the
+    # NOT NULL constraint on the FK and rolls the whole delete back.
+    report = relationship(
+        "Report",
+        back_populates="case",
+        uselist=False,
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
 
     def __repr__(self):
         return f"<Case {self.id[:8]} — {self.status.value}>"

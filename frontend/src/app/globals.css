@@ -163,6 +163,7 @@ h4 { font-size: 1rem;    font-weight: 600; }
 .badge-success   { background: var(--success-light); color: var(--success); }
 .badge-warning   { background: var(--warning-light); color: var(--warning); }
 .badge-danger    { background: var(--danger-light);  color: var(--danger); }
+.badge-secondary { background: rgba(100, 116, 139, 0.12); color: rgb(71, 85, 105); }
 
 /* ─── Buttons ───────────────────────────────────────────── */
 .btn {

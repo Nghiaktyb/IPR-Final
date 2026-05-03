@@ -9,7 +9,9 @@ import os
 
 from app.config import settings
 from app.database import init_db
-from app.routers import auth, patients, cases, reports, admin
+from app.routers import (
+    auth, patients, cases, reports, admin, admin_training, admin_retention,
+)
 
 # ─── Create App ─────────────────────────────────────────
 app = FastAPI(
@@ -44,6 +46,8 @@ app.include_router(patients.router)
 app.include_router(cases.router)
 app.include_router(reports.router)
 app.include_router(admin.router)
+app.include_router(admin_training.router)
+app.include_router(admin_retention.router)
 
 
 # ─── Startup Event ─────────────────────────────────────

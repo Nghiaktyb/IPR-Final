@@ -20,19 +20,60 @@
 .section { margin-bottom: 32px; }
 .section h2 { margin-bottom: 16px; font-size: 1.2rem; }
 
-.perfGrid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;
+/* ─── Dashboard chart row ──────────────────────────── */
+.dashCharts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 32px;
 }
-.perfCard {
-  background: var(--admin-card); border: 1px solid var(--admin-border);
-  border-radius: 12px; padding: 18px;
+.chartPanel {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
-.perfCard h4 { margin-bottom: 12px; font-size: 0.95rem; }
-.perfStats { display: flex; gap: 16px; margin-bottom: 10px; }
-.perfNum { display: block; font-size: 1.2rem; font-weight: 800; }
-.perfLabel { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
-.perfBar {
-  height: 6px; background: rgba(0,0,0,0.08); border-radius: 4px; overflow: hidden;
+.chartHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.chartHead h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.chartSub {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.chartMore {
+  align-self: flex-end;
+  margin-top: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+.chartMore:hover { text-decoration: underline; }
+.chartEmpty {
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 1000px) {
+  .dashCharts { grid-template-columns: 1fr; }
 }
 
 .navCards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }

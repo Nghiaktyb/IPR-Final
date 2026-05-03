@@ -1,0 +1,323 @@
+/* MedicX — Chart kit styles
+ * Sized to read comfortably with the project's 14px html base (inherits Inter).
+ * All colours come from the global design system in `app/globals.css`.
+ */
+
+/* ─── Entrance / mount animations ──────────────────────
+ * Bars take their final width from the inline `style` set in JSX
+ * (e.g. `width: 73%`). The keyframe below animates from 0 up to that
+ * value on first paint, so charts visibly "fill in" instead of snapping
+ * to their final size.
+ */
+@keyframes mxBarGrowH {
+  from { width: 0%; }
+}
+@keyframes mxFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Donut ─────────────────────────────────────────── */
+.donutWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.donutCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+  gap: 2px;
+}
+.donutCenterTop {
+  font-family: var(--font);
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text-primary);
+}
+.donutCenterBottom {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.donutCenterEmpty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ─── Stacked horizontal bar ────────────────────────── */
+.stackedBar {
+  display: flex;
+  width: 100%;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--border-light);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.stackedSeg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.15s ease;
+  cursor: default;
+  animation: mxBarGrowH 900ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.stackedSeg:hover { filter: brightness(1.08); }
+
+.stackedEmpty {
+  width: 100%;
+  border-radius: var(--radius-full);
+  background: var(--border-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  font-style: italic;
+}
+
+/* ─── Stacked bar rows (table-style) ────────────────── */
+.rowChart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.rowChartRow {
+  display: grid;
+  grid-template-columns: 150px 1fr 110px;
+  gap: 18px;
+  align-items: center;
+  opacity: 0;
+  animation: mxFadeIn 420ms ease-out both;
+}
+.rowChartRow:nth-child(1) { animation-delay: 700ms; }
+.rowChartRow:nth-child(2) { animation-delay: 800ms; }
+.rowChartRow:nth-child(3) { animation-delay: 900ms; }
+.rowChartRow:nth-child(4) { animation-delay: 1000ms; }
+.rowChartRow:nth-child(5) { animation-delay: 1100ms; }
+.rowChartRow:nth-child(6) { animation-delay: 1200ms; }
+.rowChartRow:nth-child(7) { animation-delay: 1300ms; }
+.rowChartRow:nth-child(8) { animation-delay: 1400ms; }
+/* Stagger every segment in a stacked-row bar slightly after its row
+ * arrives so the colours wash in left-to-right within each row. */
+.rowChartRow:nth-child(1) .stackedSeg { animation-delay: 720ms; }
+.rowChartRow:nth-child(2) .stackedSeg { animation-delay: 820ms; }
+.rowChartRow:nth-child(3) .stackedSeg { animation-delay: 920ms; }
+.rowChartRow:nth-child(4) .stackedSeg { animation-delay: 1020ms; }
+.rowChartRow:nth-child(5) .stackedSeg { animation-delay: 1120ms; }
+.rowChartRow:nth-child(6) .stackedSeg { animation-delay: 1220ms; }
+.rowChartRow:nth-child(7) .stackedSeg { animation-delay: 1320ms; }
+.rowChartRow:nth-child(8) .stackedSeg { animation-delay: 1420ms; }
+.rowChartLabel {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+.rowChartBar { min-width: 0; }
+.rowChartTotal {
+  text-align: right;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  /* Align the bold count and small caption on a single baseline. */
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+.rowChartTotal small {
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+  .rowChartRow {
+    grid-template-columns: 100px 1fr 70px;
+    gap: 10px;
+  }
+  .rowChartLabel { font-size: 0.9rem; }
+  .rowChartTotal small { display: none; }
+}
+
+/* ─── Ranked horizontal bars ────────────────────────── */
+.ranked {
+  display: flex;
+  flex-direction: column;
+  /* Distribute rows evenly when the parent gives us extra height
+   * (e.g. when our panel sits next to a taller sibling panel). */
+  justify-content: space-around;
+  gap: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.rankedRow {
+  display: grid;
+  grid-template-columns: 150px 1fr 80px;
+  gap: 18px;
+  align-items: center;
+}
+.rankedLabel {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+.rankedTrack {
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--border-light);
+  box-shadow: inset 0 0 0 1px var(--border);
+  overflow: hidden;
+}
+.rankedFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  animation: mxBarGrowH 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* Cascade the bars in so each row "deals" after the one above it. */
+.rankedRow:nth-child(1) .rankedFill { animation-delay: 600ms; }
+.rankedRow:nth-child(2) .rankedFill { animation-delay: 700ms; }
+.rankedRow:nth-child(3) .rankedFill { animation-delay: 800ms; }
+.rankedRow:nth-child(4) .rankedFill { animation-delay: 900ms; }
+.rankedRow:nth-child(5) .rankedFill { animation-delay: 1000ms; }
+.rankedRow:nth-child(6) .rankedFill { animation-delay: 1100ms; }
+.rankedRow:nth-child(7) .rankedFill { animation-delay: 1200ms; }
+.rankedRow:nth-child(8) .rankedFill { animation-delay: 1300ms; }
+/* Same gentle stagger for the row labels + value chips so the whole
+ * row arrives together rather than the bar leading the text. */
+.rankedRow {
+  opacity: 0;
+  animation: mxFadeIn 420ms ease-out both;
+}
+.rankedRow:nth-child(1) { animation-delay: 580ms; }
+.rankedRow:nth-child(2) { animation-delay: 680ms; }
+.rankedRow:nth-child(3) { animation-delay: 780ms; }
+.rankedRow:nth-child(4) { animation-delay: 880ms; }
+.rankedRow:nth-child(5) { animation-delay: 980ms; }
+.rankedRow:nth-child(6) { animation-delay: 1080ms; }
+.rankedRow:nth-child(7) { animation-delay: 1180ms; }
+.rankedRow:nth-child(8) { animation-delay: 1280ms; }
+.rankedFill::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  border-radius: var(--radius-full);
+  opacity: 0.45;
+}
+.rankedValue {
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .rankedRow {
+    grid-template-columns: 100px 1fr 60px;
+    gap: 10px;
+  }
+  .rankedLabel { font-size: 0.9rem; }
+  .rankedValue { font-size: 0.95rem; }
+}
+
+/* ─── Legend ────────────────────────────────────────── */
+.legend {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  background: var(--border-light);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+}
+.legendDot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.legendLabel {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.legendValue {
+  margin-left: 2px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Radial gauge ──────────────────────────────────── */
+.gaugeWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.gaugeCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+  gap: 2px;
+}
+.gaugeValue {
+  font-family: var(--font);
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.gaugeLabel {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Honour OS-level "reduce motion" — bars and rows snap to final size. */
+@media (prefers-reduced-motion: reduce) {
+  .stackedSeg,
+  .rankedFill,
+  .rankedRow,
+  .rowChartRow {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

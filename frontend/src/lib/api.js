@@ -75,8 +75,25 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: 'An error occurred' }));
-        throw new Error(error.detail || `HTTP ${response.status}`);
+        const payload = await response.json().catch(() => ({ detail: 'An error occurred' }));
+        // FastAPI may return either a string `detail` or a structured dict
+        // (e.g. our 409 duplicate-patient response). Surface a readable
+        // message but also attach the raw payload + status so callers can
+        // branch on structured fields like `existing_patient_id`.
+        let message;
+        if (typeof payload.detail === 'string') {
+          message = payload.detail;
+        } else if (payload.detail && typeof payload.detail === 'object' && payload.detail.detail) {
+          message = payload.detail.detail;
+        } else {
+          message = `HTTP ${response.status}`;
+        }
+        const err = new Error(message);
+        err.status = response.status;
+        err.payload = payload.detail && typeof payload.detail === 'object'
+          ? payload.detail
+          : payload;
+        throw err;
       }
 
       // Handle blob responses (PDF downloads)
@@ -84,7 +101,11 @@ class ApiClient {
         return response.blob();
       }
 
-      return response.json();
+      if (response.status === 204) {
+        return null;
+      }
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
     } catch (err) {
       console.error(`API Error [${endpoint}]:`, err.message);
       throw err;
@@ -142,6 +163,10 @@ class ApiClient {
 
   async archivePatient(id) {
     return this.request(`/api/patients/${id}/archive`, { method: 'POST' });
+  }
+
+  async deletePatient(id) {
+    return this.request(`/api/patients/${id}`, { method: 'DELETE' });
   }
 
   // Cases
@@ -241,6 +266,85 @@ class ApiClient {
 
   async getAIPerformance() {
     return this.request('/api/admin/ai-performance');
+  }
+
+  // Admin — AI Training
+  async getTrainingCapabilities() {
+    return this.request('/api/admin/training/capabilities');
+  }
+
+  async getTrainingDatasets() {
+    return this.request('/api/admin/training/datasets');
+  }
+
+  async uploadTrainingDataset({ name, description, csvFile, images, archive }) {
+    const fd = new FormData();
+    fd.append('name', name);
+    if (description) fd.append('description', description);
+    if (csvFile) fd.append('csv_file', csvFile);
+    (images || []).forEach(img => fd.append('images', img));
+    if (archive) fd.append('archive', archive);
+    return this.request('/api/admin/training/datasets', {
+      method: 'POST',
+      body: fd,
+    });
+  }
+
+  async deleteTrainingDataset(id) {
+    return this.request(`/api/admin/training/datasets/${id}`, { method: 'DELETE' });
+  }
+
+  async getTrainingRuns(datasetId) {
+    const q = datasetId ? `?dataset_id=${encodeURIComponent(datasetId)}` : '';
+    return this.request(`/api/admin/training/runs${q}`);
+  }
+
+  async getTrainingRun(id) {
+    return this.request(`/api/admin/training/runs/${id}`);
+  }
+
+  async startTrainingRun(payload) {
+    return this.request('/api/admin/training/runs', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async promoteTrainingRun(id) {
+    return this.request(`/api/admin/training/runs/${id}/promote`, { method: 'POST' });
+  }
+
+  async cancelTrainingRun(id) {
+    return this.request(`/api/admin/training/runs/${id}/cancel`, { method: 'POST' });
+  }
+
+  // ── Data retention (admin) ───────────────────────────────────
+  async getRetentionConfig() {
+    return this.request('/api/admin/retention/config');
+  }
+
+  async getExpiredPatients(retentionYears) {
+    const qs = retentionYears ? `?retention_years=${retentionYears}` : '';
+    return this.request(`/api/admin/retention/expired${qs}`);
+  }
+
+  async deleteExpiredPatient(patientId, { dryRun = false } = {}) {
+    const qs = dryRun ? '?dry_run=true' : '';
+    return this.request(
+      `/api/admin/retention/patients/${patientId}${qs}`,
+      { method: 'DELETE' },
+    );
+  }
+
+  async purgeExpiredPatients(retentionYears, { dryRun = false } = {}) {
+    const params = new URLSearchParams();
+    if (retentionYears) params.set('retention_years', retentionYears);
+    if (dryRun) params.set('dry_run', 'true');
+    const qs = params.toString();
+    return this.request(
+      `/api/admin/retention/purge${qs ? `?${qs}` : ''}`,
+      { method: 'POST' },
+    );
   }
 }
 

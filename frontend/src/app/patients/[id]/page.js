@@ -3,22 +3,30 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 
 export default function PatientProfilePage() {
   const { id } = useParams();
   const router = useRouter();
-  
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [patient, setPatient] = useState(null);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState(null);
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadData = async () => {
@@ -27,13 +35,14 @@ export default function PatientProfilePage() {
       const p = await api.getPatient(id);
       setPatient(p);
       setEditForm({
+        patient_code: p.patient_code || '',
         full_name: p.full_name,
         date_of_birth: p.date_of_birth,
         sex: p.sex,
         blood_type: p.blood_type || '',
         medical_history: p.medical_history || ''
       });
-      
+
       const c = await api.getCases({ patient_id: id });
       setCases(c.cases || []);
     } catch (e) {
@@ -46,15 +55,37 @@ export default function PatientProfilePage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    setEditError(null);
     setSaving(true);
     try {
       await api.updatePatient(id, editForm);
       setIsEditing(false);
       loadData();
-    } catch (e) {
-      alert(e.message);
+    } catch (err) {
+      if (err.status === 409 && err.payload?.existing_patient_id) {
+        setEditError({
+          kind: 'duplicate',
+          message: err.message,
+          existingId: err.payload.existing_patient_id,
+          existingName: err.payload.existing_patient_name,
+          code: err.payload.patient_code,
+        });
+      } else {
+        setEditError({ kind: 'generic', message: err.message });
+      }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await api.deletePatient(id);
+      router.push('/patients');
+    } catch (e) {
+      alert(`Could not delete patient: ${e.message}`);
+      setDeleting(false);
     }
   };
 
@@ -68,16 +99,48 @@ export default function PatientProfilePage() {
 
   return (
     <div>
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:28}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:28, gap:16}}>
         <div>
           <Link href="/patients" style={{color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: 8, display: 'inline-block'}}>← Back to Directory</Link>
-          <h1 style={{display:'flex', alignItems:'center', gap:12}}>
+          <h1 style={{display:'flex', alignItems:'center', gap:12, flexWrap:'wrap'}}>
             {patient.full_name}
             <span className="badge badge-primary">{patient.sex}</span>
+            {patient.is_archived && <span className="badge badge-secondary">Archived</span>}
           </h1>
-          <p style={{color:'var(--text-secondary)', marginTop:4}}>Patient ID: {patient.id.substring(0,8)}</p>
+          <p style={{color:'var(--text-secondary)', marginTop:6, display:'flex', gap:14, flexWrap:'wrap', alignItems:'center'}}>
+            <span>
+              <strong style={{color:'var(--text-primary)'}}>Patient ID:</strong>{' '}
+              {patient.patient_code ? (
+                <code style={{
+                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                  fontSize: '0.9rem',
+                  background: 'var(--primary-light)',
+                  color: 'var(--primary)',
+                  padding: '2px 8px',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                }}>{patient.patient_code}</code>
+              ) : (
+                <span style={{fontStyle:'italic'}}>not set</span>
+              )}
+            </span>
+            <span style={{color:'var(--text-muted)', fontSize:'0.85rem'}}>
+              Internal: {patient.id.substring(0,8)}…
+            </span>
+          </p>
         </div>
-        <Link href={`/cases/new?patient=${patient.id}`} className="btn btn-primary">+ New Study</Link>
+        <div style={{display:'flex', gap:8, alignItems:'flex-start'}}>
+          <Link href={`/cases/new?patient=${patient.id}`} className="btn btn-primary">+ New Study</Link>
+          {isAdmin && (
+            <button
+              className="btn btn-danger"
+              onClick={() => setConfirmDelete(true)}
+              title="Permanently delete this patient and all linked cases/reports"
+            >
+              Delete Patient
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={{display:'grid', gridTemplateColumns:'300px 1fr', gap:24}}>
@@ -91,6 +154,46 @@ export default function PatientProfilePage() {
             
             {isEditing ? (
               <form onSubmit={handleSave}>
+                {editError?.kind === 'duplicate' && (
+                  <div style={{
+                    background: 'var(--warning-light)',
+                    border: '1px solid color-mix(in srgb, var(--warning) 30%, transparent)',
+                    color: '#7a4a00',
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    marginBottom: 12,
+                    fontSize: '0.85rem',
+                    lineHeight: 1.5,
+                  }}>
+                    Patient ID <code style={{fontFamily:'ui-monospace, monospace'}}>{editError.code}</code>{' '}
+                    is already used by <strong>{editError.existingName}</strong>.{' '}
+                    <Link href={`/patients/${editError.existingId}`} style={{textDecoration:'underline', fontWeight:600}}>
+                      Open →
+                    </Link>
+                  </div>
+                )}
+                {editError?.kind === 'generic' && (
+                  <div style={{
+                    background: 'var(--danger-light)',
+                    color: 'var(--danger)',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    marginBottom: 12,
+                    fontSize: '0.85rem',
+                  }}>
+                    {editError.message}
+                  </div>
+                )}
+                <div className="input-group" style={{marginBottom:12}}>
+                  <label>Patient ID</label>
+                  <input
+                    className="input"
+                    value={editForm.patient_code}
+                    onChange={e=>setEditForm({...editForm, patient_code: e.target.value})}
+                    placeholder="MRN / hospital ID"
+                    style={{fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace'}}
+                  />
+                </div>
                 <div className="input-group" style={{marginBottom:12}}>
                   <label>Full Name</label>
                   <input className="input" value={editForm.full_name} onChange={e=>setEditForm({...editForm, full_name: e.target.value})} required />
@@ -126,7 +229,13 @@ export default function PatientProfilePage() {
                 </div>
                 <div style={{display:'flex', gap:8}}>
                   <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>Save</button>
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsEditing(false)}>Cancel</button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => { setIsEditing(false); setEditError(null); }}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </form>
             ) : (
@@ -225,6 +334,47 @@ export default function PatientProfilePage() {
           )}
         </div>
       </div>
+
+      {/* ── Confirm Delete Patient Modal (admin) ─────────────── */}
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => !deleting && setConfirmDelete(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Delete patient?</h3>
+            </div>
+            <p style={{margin: '14px 0', lineHeight: 1.6}}>
+              Permanently delete <strong>{patient.full_name}</strong>
+              {patient.patient_code && (
+                <> (<code style={{fontFamily:'ui-monospace, monospace'}}>{patient.patient_code}</code>)</>
+              )}
+              {' '}and all <strong>{cases.length}</strong> linked imaging
+              study/studies?
+              <br /><br />
+              Every X-ray image, AI heatmap, and PDF report tied to this
+              patient will also be removed from disk.
+              <span style={{color: 'var(--danger)', display: 'block', marginTop: 8, fontWeight: 600}}>
+                This cannot be undone.
+              </span>
+            </p>
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete patient'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
