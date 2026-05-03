@@ -21,6 +21,7 @@ from app.schemas.case import (
 from app.middleware.auth import get_current_user, log_action, decode_token
 from app.services.ai_service import ai_model
 from app.services.gradcam_service import generate_all_heatmaps
+from app.services.file_resolver import resolve_storage_path
 from app.config import settings
 from datetime import datetime, timezone
 
@@ -172,10 +173,12 @@ def get_case_image(
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    if not os.path.exists(case.image_path):
+
+    resolved = resolve_storage_path(case.image_path)
+    if not resolved:
         raise HTTPException(status_code=404, detail="Image file not found")
 
-    return FileResponse(case.image_path, media_type="image/png")
+    return FileResponse(resolved, media_type="image/png")
 
 
 @router.get("/{case_id}/heatmap/{disease}")
@@ -197,10 +200,11 @@ def get_heatmap(
     heatmap_paths = case.heatmap_paths or {}
     heatmap_path = heatmap_paths.get(disease)
 
-    if not heatmap_path or not os.path.exists(heatmap_path):
+    resolved = resolve_storage_path(heatmap_path)
+    if not resolved:
         raise HTTPException(status_code=404, detail=f"Heatmap not available for {disease}")
 
-    return FileResponse(heatmap_path, media_type="image/png")
+    return FileResponse(resolved, media_type="image/png")
 
 
 @router.post("/{case_id}/analyze", response_model=InferenceResponse)

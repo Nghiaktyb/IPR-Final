@@ -15,6 +15,7 @@ import os
 from datetime import datetime
 from PIL import Image as PILImage, ImageDraw
 from app.config import settings
+from app.services.file_resolver import resolve_storage_path
 
 def _create_annotated_image(img_path: str, drawing_paths: list, out_path: str) -> bool:
     try:
@@ -35,29 +36,10 @@ def _create_annotated_image(img_path: str, drawing_paths: list, out_path: str) -
         print(f"Error annotating image: {e}")
         return False
 
+
 def _resolve_path(path: str, disease_name: str = None) -> str:
-    """
-    Tries to find a valid absolute path for an image.
-    Checks absolute path, then searches in uploads/, heatmaps/, and reports/.
-    """
-    if not path:
-        return None
-        
-    # 1. Try absolute/direct path
-    if os.path.exists(path):
-        return path
-    
-    # 2. Try to find the filename in our known storage directories
-    filename = os.path.basename(path)
-    search_dirs = [settings.UPLOAD_DIR, settings.HEATMAP_DIR, settings.REPORT_DIR]
-    
-    for s_dir in search_dirs:
-        local_path = os.path.join(s_dir, filename)
-        if os.path.exists(local_path):
-            return local_path
-            
-    print(f"[REPORT ERROR] Could not resolve image path: {path}")
-    return None
+    """Locate a stored image on the current machine. See ``file_resolver``."""
+    return resolve_storage_path(path)
 
 def _get_scaled_image(path: str, max_width: float):
     """Loads and scales an image for ReportLab. Assumes path is already valid."""

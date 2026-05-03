@@ -13,6 +13,7 @@ from app.models.report import Report
 from app.schemas.report import ReportCreate, ReportResponse
 from app.middleware.auth import get_current_user, log_action, decode_token
 from app.services.report_service import generate_pdf_report
+from app.services.file_resolver import resolve_storage_path
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
@@ -78,10 +79,11 @@ def download_report(report_id: str, db: Session = Depends(get_db), current_user:
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    if not report.pdf_path or not os.path.exists(report.pdf_path):
+    resolved_pdf = resolve_storage_path(report.pdf_path)
+    if not resolved_pdf:
         raise HTTPException(status_code=404, detail="PDF file not found")
     log_action(db, current_user.id, "download_report", "report", report.id)
-    return FileResponse(report.pdf_path, media_type="application/pdf", filename=os.path.basename(report.pdf_path))
+    return FileResponse(resolved_pdf, media_type="application/pdf", filename=os.path.basename(resolved_pdf))
 
 def _get_user_from_query_token(token: str, db: Session) -> User:
     payload = decode_token(token)
@@ -99,10 +101,11 @@ def download_report_by_case(case_id: str, token: str, db: Session = Depends(get_
     report = db.query(Report).filter(Report.case_id == case_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    if not report.pdf_path or not os.path.exists(report.pdf_path):
+    resolved_pdf = resolve_storage_path(report.pdf_path)
+    if not resolved_pdf:
         raise HTTPException(status_code=404, detail="PDF file not found")
     log_action(db, user.id, "download_report", "report", report.id)
-    return FileResponse(report.pdf_path, media_type="application/pdf", filename=os.path.basename(report.pdf_path))
+    return FileResponse(resolved_pdf, media_type="application/pdf", filename=os.path.basename(resolved_pdf))
 
 @router.get("/case/{case_id}", response_model=ReportResponse)
 def get_report_by_case(case_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
